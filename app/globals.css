@@ -1,0 +1,59 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+/* Map the tokens to Tailwind utilities (bg-paper, text-ink, border-ink, shadow-panel, rounded-btn, font-display...) */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-pink: var(--pink);
+  --color-sun: var(--sun);
+  --color-teal: var(--teal);
+  --color-card: var(--card);
+  --color-paper-2: var(--paper-2);
+  --color-ink-soft: var(--ink-soft);
+  --color-danger: var(--danger);
+
+  --color-rank-e: var(--rank-e);
+  --color-rank-d: var(--rank-d);
+  --color-rank-c: var(--rank-c);
+  --color-rank-b: var(--rank-b);
+  --color-rank-a: var(--rank-a);
+  --color-rank-s: var(--rank-s);
+
+  --shadow-panel: var(--shadow-panel);
+  --shadow-row: var(--shadow-row);
+  --shadow-pressed: var(--shadow-pressed);
+
+  --radius-card: var(--radius-card);
+  --radius-input: var(--radius-input);
+  --radius-badge: var(--radius-badge);
+  --radius-btn: var(--radius-btn);
+
+  --font-sans: var(--font-zen);
+  --font-display: var(--font-dela);
+  --font-sfx: var(--font-sfx-face);
+}
+
+html {
+  background: var(--paper);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-zen), sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 3px solid var(--pink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

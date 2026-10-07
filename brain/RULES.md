@@ -23,7 +23,7 @@ If something is not in these files or in the code, it is not decided. Do not fil
 
 ## 3. Never invent
 - **Files and paths:** check that a file, folder, function or export exists (search the repo) before importing or referencing it. Do not assume `/lib` helpers exist.
-- **Packages and APIs:** do not use a package, a function or an option you have not confirmed. Check `package.json` and the installed version, or the official docs. If it is not installed, ask before adding a dependency.
+- **Packages and APIs:** do not use a package, a function or an option you have not confirmed. Check `package.json` and the installed version, or the official docs. If it is not installed, ask before adding a dependency. Next.js here is a newer version than most model knowledge: read `node_modules/next/dist/docs/` before using any Next.js API.
 - **AniList fields:** use only the fields listed in ARCHITECTURE.md, or fields confirmed in the AniList GraphQL docs or schema. Do not make up field names, arguments or enums.
 - **Database objects:** use only the tables, columns, views and functions in ARCHITECTURE.md. Changing the schema means changing ARCHITECTURE.md in the same change.
 - **Numbers:** do not invent thresholds, XP values, caps or timings. They come from PRODUCT.md and `/lib/config.ts`. Never hardcode them in components or logic.

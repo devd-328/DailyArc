@@ -15,9 +15,16 @@ The card is the growth loop. The quest tracker is the retention loop. Build the 
 ## Owner
 Dev Das, CS student, frontend focused. Prefer clear, boring, well-typed code over clever code.
 
-## Proposed stack (change here if it changes)
-- Next.js (App Router), TypeScript, Tailwind CSS
-- Supabase (auth, Postgres) added only when quests ship
+## Stack (change here if it changes)
+Installed and working (see package.json for exact versions):
+- Next.js 16.4.0 (App Router, Turbopack, Cache Components and React Compiler enabled in next.config.ts), React 19.3.0, TypeScript, Tailwind CSS 4
+- Vitest for unit tests, ESLint
+- Node 24 is the local runtime
+
+This Next.js version is newer than most model knowledge. Before writing Next.js code, read the matching guide in `node_modules/next/dist/docs/` (see AGENTS.md). Do not rely on memory for Next.js APIs.
+
+Not installed yet:
+- Supabase (auth, Postgres), added only when quests ship
 - AniList GraphQL API for anime data. The card needs no login, only a public username. Quests, profile and the public page need an account: sign in with AniList, Google or email (see Auth in ARCHITECTURE.md)
 - Card image export: server-side render with Satori or @vercel/og
 - Hosting: Vercel
@@ -35,12 +42,27 @@ Dev Das, CS student, frontend focused. Prefer clear, boring, well-typed code ove
 ## Visual source of truth
 The approved mockups are the HTML files in /mockups (start with home-v2.html). Their exact values are written down in DESIGN_SYSTEM.md under Screen references. New screens must match that look exactly. The older Claude artifact and Home screen@2x.png are superseded because they show the wrong rank and XP numbers.
 
+## Commands
+- `npm run dev`: start the dev server
+- `npm run build`: production build
+- `npm run lint`: ESLint
+- `npm run typecheck`: generates Next route types, then runs tsc
+- `npm test`: Vitest, one run (`npm run test:watch` to watch)
+
 ## Folder layout
-/app            routes and pages
+/app            routes and pages. app/fonts holds the self-hosted katakana subset for sound effects
 /components     UI components (card, stat screen, quest row)
-/lib            pure functions and config (see ARCHITECTURE.md): xp.ts, ranks.ts, watcherType.ts, stats.ts, streaks.ts, anilist.ts, config.ts
-/styles         tokens.css
+/lib            pure functions and config. Exists now: config.ts. Planned (see ARCHITECTURE.md): xp.ts, ranks.ts, watcherType.ts, stats.ts, streaks.ts, anilist.ts
+/styles         tokens.css (design tokens, imported by app/globals.css and mapped to Tailwind there)
 /brain          these brain files
+/mockups        approved HTML mockups and renders
+
+Tests sit next to the code they test (for example lib/config.test.ts).
+
+## Setup status
+Done: Next.js scaffold, Tailwind with design tokens, fonts (Dela Gothic One, Zen Kaku Gothic New, katakana subset), Vitest, `lib/config.ts`.
+Placeholder: `app/page.tsx` is a temporary page that only proves the setup works. Replace it with the landing screen.
+Dark mode is not implemented (light first).
 
 ## Definition of done
 Works on mobile width first, matches tokens, has no console errors, and the card exports cleanly at 1080x1920 and 1080x1080.

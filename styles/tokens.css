@@ -1,0 +1,70 @@
+/*
+  DailyArc design tokens. Source of truth: brain/DESIGN_SYSTEM.md.
+  Light first. Dark mode is not implemented yet (it is an inversion, see the design system).
+  Components must use these tokens. No hardcoded hex values in components.
+*/
+:root {
+  color-scheme: light;
+
+  /* Core palette */
+  --paper: #eef2f6;
+  --ink: #1b2559;
+  --pink: #ff5a8a;
+  --sun: #ffc93c;
+  --teal: #2fa39a;
+  --card: #ffffff;
+  --paper-2: #dde4ee;
+  --ink-soft: #5b6794;
+  --danger: #e5484d;
+
+  /* Texture and overlays */
+  --halftone: #c9d3e3;
+  --dim: rgba(27, 37, 89, 0.62);
+  --xp-hatch-a: #ffc93c;
+  --xp-hatch-b: #f2b51f;
+
+  /* Rank colors. Always shown together with the rank letter. */
+  --rank-e: #9aa7b8;
+  --rank-d: #2fa39a;
+  --rank-c: #3b6cff;
+  --rank-b: #ff5a8a;
+  --rank-a: #ff8a3d;
+  --rank-s: #ffc93c;
+
+  /* Rank letter colors (see the contrast table in the design system) */
+  --rank-e-text: var(--ink);
+  --rank-d-text: var(--ink);
+  --rank-c-text: #ffffff;
+  --rank-b-text: var(--ink);
+  --rank-a-text: var(--ink);
+  --rank-s-text: var(--ink);
+
+  /* Shape */
+  --outline: 2px;
+  --radius-card: 6px;
+  --radius-input: 6px;
+  --radius-chip: 999px;
+  --radius-badge: 2px;
+  --radius-btn: 10px;
+
+  /* Hard offset shadows. Never blurred. */
+  --shadow-panel: 4px 4px 0 var(--ink);
+  --shadow-row: 3px 3px 0 var(--ink);
+  --shadow-pressed: 1px 1px 0 var(--ink);
+}
+
+/* Halftone dots behind hero areas only, fading out downward. */
+.halftone {
+  position: relative;
+}
+.halftone::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 330px;
+  background-image: radial-gradient(circle, var(--halftone) 1.6px, transparent 1.8px);
+  background-size: 8px 8px;
+  -webkit-mask-image: linear-gradient(#000, transparent);
+  mask-image: linear-gradient(#000, transparent);
+  pointer-events: none;
+}
