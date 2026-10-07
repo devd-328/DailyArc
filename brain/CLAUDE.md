@@ -33,7 +33,7 @@ Dev Das, CS student, frontend focused. Prefer clear, boring, well-typed code ove
 - Cache AniList responses and cards as defined in ARCHITECTURE.md (by username, day and config version) and respect rate limits.
 
 ## Visual source of truth
-The approved home screen mockup is at https://claude.ai/artifact/BhtbrDNSD2p78VAWnFrmXg and its exact values live in the Home screen reference section of DESIGN_SYSTEM.md. New screens must match that look exactly.
+The approved mockups are the HTML files in /mockups (start with home-v2.html). Their exact values are written down in DESIGN_SYSTEM.md under Screen references. New screens must match that look exactly. The older Claude artifact and Home screen@2x.png are superseded because they show the wrong rank and XP numbers.
 
 ## Folder layout
 /app            routes and pages
