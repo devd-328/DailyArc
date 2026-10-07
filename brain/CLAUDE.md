@@ -26,7 +26,6 @@ This Next.js version is newer than most model knowledge. Before writing Next.js 
 Not installed yet:
 - Supabase (auth, Postgres), added only when quests ship
 - AniList GraphQL API for anime data. The card needs no login, only a public username. Quests, profile and the public page need an account: sign in with AniList, Google or email (see Auth in ARCHITECTURE.md)
-- Card image export: server-side render with Satori or @vercel/og
 - Hosting: Vercel
 
 ## Working rules
@@ -52,7 +51,7 @@ The approved mockups are the HTML files in /mockups (start with home-v2.html). T
 ## Folder layout
 /app            routes and pages. app/fonts holds the self-hosted katakana subset for sound effects
 /components     UI components (card, stat screen, quest row)
-/lib            pure functions and config. Exists now: config.ts, types.ts, xp.ts, ranks.ts, streaks.ts, seasons.ts, stats.ts, watcherType.ts, username.ts, anilist.ts, wrapped.ts
+/lib            pure functions and config. Exists now: config.ts, types.ts, xp.ts, ranks.ts, streaks.ts, seasons.ts, stats.ts, watcherType.ts, username.ts, anilist.ts, wrapped.ts, card.ts, tokens.ts
 /styles         tokens.css (design tokens, imported by app/globals.css and mapped to Tailwind there)
 /brain          these brain files
 /mockups        approved HTML mockups and renders
@@ -60,8 +59,8 @@ The approved mockups are the HTML files in /mockups (start with home-v2.html). T
 Tests sit next to the code they test (for example lib/config.test.ts).
 
 ## Setup status
-Done: Next.js scaffold, Tailwind with design tokens, fonts (Dela Gothic One, Zen Kaku Gothic New, katakana subset), Vitest, `lib/config.ts`, the pure functions listed under /lib (with unit tests), the public landing screen, AniList fetch, `GET /api/wrapped/[username]`, and the Wrapped result page.
-Not done yet: card image export (`/api/card`), `/login` and accounts, and IP rate limiting on public APIs. Save for story and Save square are on the result screen but not wired. `/login` is linked from the landing and result and is not built yet.
+Done: Next.js scaffold, Tailwind with design tokens, fonts (Dela Gothic One, Zen Kaku Gothic New, katakana subset), Vitest, `lib/config.ts`, the pure functions listed under /lib (with unit tests), the public landing screen, AniList fetch, `GET /api/wrapped/[username]`, the Wrapped result page, and card image export (`GET /api/card/[username]?format=story|square`, Save for story and Save square).
+Not done yet: `/login` and accounts, and IP rate limiting on public APIs. `/login` is linked from the landing and result and is not built yet.
 Dark mode is not implemented (light first).
 
 ## Definition of done

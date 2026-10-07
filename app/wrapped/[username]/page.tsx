@@ -6,8 +6,25 @@ import { isValidUsername } from "@/lib/username";
 import { utcDay, WRAPPED_ERROR_COPY } from "@/lib/wrapped";
 import { loadWrapped } from "@/app/wrapped/load-wrapped";
 import { io } from "next/cache";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/wrapped/[username]">): Promise<Metadata> {
+  const { username } = await params;
+  if (!isValidUsername(username)) return { title: "DailyArc" };
+  const title = `${username} · DailyArc`;
+  const image = `/api/card/${username}?format=story`;
+  return {
+    title,
+    openGraph: {
+      title,
+      images: [{ url: image, width: 1080, height: 1920 }],
+    },
+  };
+}
 
 export default function WrappedPage({ params }: PageProps<"/wrapped/[username]">) {
   return (
