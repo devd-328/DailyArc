@@ -1,10 +1,11 @@
 import { CardPreview } from "@/components/CardPreview";
-import { SiteHeader } from "@/components/SiteHeader";
+import { SiteHeader, SiteHeaderFallback } from "@/components/SiteHeader";
 import { WrappedActions } from "@/components/WrappedActions";
 import { CONFIG_VERSION } from "@/lib/config";
 import { isValidUsername } from "@/lib/username";
 import { utcDay, WRAPPED_ERROR_COPY } from "@/lib/wrapped";
 import { loadWrapped } from "@/app/wrapped/load-wrapped";
+import { isSignedIn } from "@/lib/supabase/session";
 import { io } from "next/cache";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -30,7 +31,9 @@ export default function WrappedPage({ params }: PageProps<"/wrapped/[username]">
   return (
     <main className="halftone relative min-h-dvh overflow-x-clip">
       <div className="page-gutter mx-auto w-full max-w-6xl">
-        <SiteHeader />
+        <Suspense fallback={<SiteHeaderFallback />}>
+          <SiteHeader />
+        </Suspense>
         <Suspense fallback={<WrappedFallback />}>
           <WrappedBody params={params} />
         </Suspense>
@@ -60,18 +63,20 @@ async function WrappedBody({ params }: { params: Promise<{ username: string }> }
         </p>
       ) : null}
       <WrappedActions username={result.username} />
-      <div className="mt-4 flex w-full items-center gap-3 rounded-card border-2 border-ink bg-card px-3.5 py-3 shadow-row">
-        <div className="min-w-0 flex-1">
-          <div className="font-display text-[19px] leading-[1.2]">Add your rank to this card</div>
-          <div className="mt-0.5 text-sm font-medium">Sign up and start quests.</div>
+      {!(await isSignedIn()) ? (
+        <div className="mt-4 flex w-full items-center gap-3 rounded-card border-2 border-ink bg-card px-3.5 py-3 shadow-row">
+          <div className="min-w-0 flex-1">
+            <div className="font-display text-[19px] leading-[1.2]">Add your rank to this card</div>
+            <div className="mt-0.5 text-sm font-medium">Sign up and start quests.</div>
+          </div>
+          <Link
+            href="/login"
+            className="flex min-h-11 shrink-0 items-center justify-center rounded-btn border-2 border-ink bg-pink px-3.5 text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed"
+          >
+            Sign up
+          </Link>
         </div>
-        <Link
-          href="/login"
-          className="flex min-h-11 shrink-0 items-center justify-center rounded-btn border-2 border-ink bg-pink px-3.5 text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed"
-        >
-          Sign up
-        </Link>
-      </div>
+      ) : null}
     </div>
   );
 }

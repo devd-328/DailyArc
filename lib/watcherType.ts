@@ -1,6 +1,10 @@
 import { WATCHER_TYPES, watcher, type WatcherType } from "./config";
 import type { ComputedStats } from "./types";
 
+export function isWatcherType(value: unknown): value is WatcherType {
+  return typeof value === "string" && (WATCHER_TYPES as readonly string[]).includes(value);
+}
+
 export const WATCHER_TYPE_LABELS: Record<WatcherType, string> = {
   genre_loyalist: "Genre Loyalist",
   classic_purist: "Classic Purist",
@@ -8,6 +12,11 @@ export const WATCHER_TYPE_LABELS: Record<WatcherType, string> = {
   binge_demon: "Binge Demon",
   wanderer: "Wanderer",
 };
+
+export function watcherTypeLabel(value: string | null): string | null {
+  if (!isWatcherType(value)) return null;
+  return WATCHER_TYPE_LABELS[value];
+}
 
 /**
  * One-line type copy on the card.

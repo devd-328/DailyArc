@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isValidUsername } from "./username";
+import { isDailyArcUsername, isReservedUsername, isValidUsername } from "./username";
 
 describe("isValidUsername", () => {
   it("accepts letters, digits and underscore, 2 to 20 characters", () => {
@@ -14,5 +14,15 @@ describe("isValidUsername", () => {
     expect(isValidUsername("a".repeat(21))).toBe(false);
     expect(isValidUsername("dev das")).toBe(false);
     expect(isValidUsername("dev-das")).toBe(false);
+  });
+});
+
+describe("isDailyArcUsername", () => {
+  it("rejects reserved route names", () => {
+    expect(isReservedUsername("login")).toBe(true);
+    expect(isReservedUsername("API")).toBe(true);
+    expect(isDailyArcUsername("login")).toBe(false);
+    expect(isDailyArcUsername("wrapped")).toBe(false);
+    expect(isDailyArcUsername("dev_das")).toBe(true);
   });
 });

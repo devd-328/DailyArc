@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ComputedStats } from "./types";
 import { WATCHER_TYPES } from "./config";
-import { pickWatcherType, WATCHER_TYPE_LABELS, WATCHER_TYPE_LINES } from "./watcherType";
+import { pickWatcherType, watcherTypeLabel, WATCHER_TYPE_LABELS, WATCHER_TYPE_LINES } from "./watcherType";
 
 function stats(overrides: Partial<ComputedStats> = {}): ComputedStats {
   return {
@@ -87,5 +87,11 @@ describe("watcher type copy", () => {
       expect(WATCHER_TYPE_LABELS[type].length).toBeGreaterThan(0);
       expect(WATCHER_TYPE_LINES[type].length).toBeGreaterThan(0);
     }
+  });
+
+  it("maps stored keys and ignores unknown values", () => {
+    expect(watcherTypeLabel("binge_demon")).toBe("Binge Demon");
+    expect(watcherTypeLabel(null)).toBeNull();
+    expect(watcherTypeLabel("made_up")).toBeNull();
   });
 });

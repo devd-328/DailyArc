@@ -65,7 +65,7 @@ Linking rules:
 
 Access:
 - Public (no login): `/`, `/login`, `/wrapped/[username]`, `/u/[username]`, `/api/wrapped/[username]`, `/api/card/[username]`.
-- Auth required: `/onboarding`, `/quests`, `/stats`, `/cards`, `/profile` and every write API. Signed-out requests are redirected to `/login`.
+- Auth required: `/onboarding`, `/rank-up`, `/quests`, `/stats`, `/cards`, `/profile` and every write API. Signed-out requests are redirected to `/login`.
 
 First sign in goes through `/onboarding`: pick a username (default: the AniList name if it is free), and the timezone is detected from the browser and saved to the profile.
 
@@ -135,7 +135,7 @@ Used for the success metrics. Insert only, through the server.
 4. Apply the daily cap: the sum of today's `base_xp` is limited to 150. In v1.1 this sum includes the day's completed side quest.
 5. Update the streak (continue, or reset to 1 if a day was missed), then apply the streak bonus to daily quests.
 6. Add XP to `profiles.total_xp` and to the matching column in `stats`.
-7. Return the new level, rank, streak and XP awarded.
+7. Return the new level, rank, streak and XP awarded. If the new rank differs from the rank before this check-in, the client opens `/rank-up`.
 
 The client never sends an XP value. XP comes only from the quest record.
 
@@ -163,6 +163,7 @@ Creating a quest is limited to 8 active quests, enforced in the database with a 
 GET    /                          landing and username input (public)
 GET    /login                     sign in or sign up: AniList, Google, email (public)
 GET    /auth/callback             Supabase callback for email and Google
+POST   /auth/signout              end session, redirect to landing
 GET    /auth/anilist              starts AniList OAuth (sign in or link)
 GET    /auth/anilist/callback     AniList OAuth callback
 GET    /onboarding                pick username, save timezone (auth, first sign in)
@@ -170,6 +171,7 @@ GET    /wrapped/[username]        result page with share buttons, Open Graph tag
 GET    /api/wrapped/[username]    returns Wrapped JSON (cached, public)
 GET    /api/card/[username]       returns PNG (query: format=story or square, default story, public)
 GET    /u/[username]              public profile, Open Graph tags point to /api/card
+GET    /rank-up                   rank-up still after a check-in that crosses a rank (auth)
 GET    /quests                    quest board (auth)
 GET    /stats                     stat screen (auth)
 GET    /cards                     own card, or the link AniList empty state (auth)

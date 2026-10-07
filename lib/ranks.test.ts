@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rankForLevel } from "./ranks";
+import { isRank, nextRankAt, rankForLevel } from "./ranks";
 
 describe("rankForLevel", () => {
   it("uses the PRODUCT.md bands", () => {
@@ -19,5 +19,21 @@ describe("rankForLevel", () => {
 
   it("rejects invalid levels", () => {
     expect(() => rankForLevel(0)).toThrow(RangeError);
+  });
+});
+
+describe("isRank", () => {
+  it("accepts the six rank letters", () => {
+    expect(isRank("B")).toBe(true);
+    expect(isRank("X")).toBe(false);
+    expect(isRank(30)).toBe(false);
+  });
+});
+
+describe("nextRankAt", () => {
+  it("points at the start of the next band", () => {
+    expect(nextRankAt(1)).toEqual({ rank: "D", level: 10 });
+    expect(nextRankAt(27)).toEqual({ rank: "B", level: 30 });
+    expect(nextRankAt(50)).toBeNull();
   });
 });

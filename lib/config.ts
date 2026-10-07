@@ -24,6 +24,14 @@ export const seasonStartMonth: Record<Season, number> = { WINTER: 1, SPRING: 4, 
 export const STATS = ["strength", "intelligence", "discipline", "charisma", "vitality"] as const;
 export type Stat = (typeof STATS)[number];
 
+export const STAT_LABELS: Record<Stat, string> = {
+  strength: "Strength",
+  intelligence: "Intelligence",
+  discipline: "Discipline",
+  charisma: "Charisma",
+  vitality: "Vitality",
+};
+
 export const WATCHER_TYPES = [
   "genre_loyalist",
   "classic_purist",

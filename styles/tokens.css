@@ -137,6 +137,29 @@
 .wrapped-result-card {
   --card-preview-scale: 0.26;
 }
+
+/* Public profile preview. 0.23 matches DESIGN_SYSTEM.md. */
+.public-profile-card {
+  --card-preview-scale: 0.23;
+}
+
+/* Rank-up speed lines. From DESIGN_SYSTEM.md / mockups/screens.html. */
+.rank-up-burst {
+  position: absolute;
+  left: 50%;
+  top: 300px;
+  width: 760px;
+  height: 760px;
+  transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--ink) 16%, transparent) 0deg 3deg,
+    transparent 3deg 12deg
+  );
+  -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 18%, transparent 68%);
+  pointer-events: none;
+}
 @media (min-width: 768px) {
   .wrapped-result-card {
     --card-preview-scale: 0.32;
@@ -188,6 +211,38 @@
   -webkit-mask-image: linear-gradient(#000, transparent);
   mask-image: linear-gradient(#000, transparent);
   pointer-events: none;
+}
+
+/* Rank S is a 12-point starburst instead of a square. */
+.rank-starburst {
+  border-radius: 0;
+  clip-path: polygon(
+    50% 0%,
+    59% 18%,
+    79% 10%,
+    73% 29%,
+    97% 35%,
+    78% 48%,
+    91% 68%,
+    70% 64%,
+    68% 88%,
+    50% 72%,
+    32% 88%,
+    30% 64%,
+    9% 68%,
+    22% 48%,
+    3% 35%,
+    27% 29%,
+    21% 10%,
+    41% 18%
+  );
+}
+
+.xp-fill {
+  display: block;
+  height: 100%;
+  background: repeating-linear-gradient(45deg, var(--xp-hatch-a) 0 6px, var(--xp-hatch-b) 6px 9px);
+  border-right: 2px solid var(--ink);
 }
 
 /* Speech-bubble tail on the Wrapped card hot take. */
