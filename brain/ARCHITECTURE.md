@@ -1,0 +1,136 @@
+# Architecture
+
+## Stack
+- Next.js (App Router, TypeScript)
+- Supabase: Postgres, Auth (AniList OAuth), row level security
+- Image generation: `next/og` (Satori) in an API route
+- Hosting: Vercel (CDN caching for card images)
+- Analytics: PostHog, or the `events` table below
+- Tests: Vitest. Everything in `/lib` is pure and must have unit tests. The leveling and watcher type rules are where bugs will hide.
+
+## Data flow
+Username -> validate -> /api/wrapped/[username] -> cache lookup -> AniList GraphQL -> computeStats() -> pickWatcherType() -> JSON -> card component and /api/card image route.
+
+## AniList query (shape)
+Fetch `MediaListCollection(userName, type: ANIME)` with:
+- list entry: status, `score(format: POINT_100)`, progress, repeat, startedAt, completedAt, updatedAt
+- media: title, format, episodes, duration, genres, season, seasonYear, startDate, averageScore, `studios(isMain: true)`
+
+Notes:
+- Always request scores as POINT_100. Users have different score formats (10 point, stars and so on), and the hot take compares against the community `averageScore` which is also out of 100.
+- `isMain: true` on studios so that sequels and co-productions don't skew the favorite studio.
+- `season` and `seasonYear` feed Seasonal Sampler. `startedAt`, `completedAt` and `updatedAt` feed the episodes per month calculation for Binge Demon.
+- Large lists come back in chunks. Loop on `hasNextChunk` until done.
+- Use `progress` (not `media.episodes`) for episodes watched, so currently watching and dropped titles count correctly. Add rewatches via `repeat`.
+
+Error handling:
+- User not found -> 404 with code `USER_NOT_FOUND`
+- Private profile -> 403 with code `PRIVATE_LIST`
+- Empty list -> 200 with code `EMPTY_LIST` and no stats
+- Rate limit (429) -> retry once or twice using the `Retry-After` header, then return 503 with code `UPSTREAM_BUSY`. Serve stale cache if any exists.
+
+## Core pure functions (/lib)
+- computeStats(list): returns hours, episodes, topGenres, topStudio, completionRate, hotTake (null if fewer than 5 scored titles)
+- pickWatcherType(stats, config): returns one of the 5 types plus the runner-up
+- xpToNext(level): round(12 * level^1.5). Valid for levels 1 to 49 (level cap is 50)
+- levelFromXp(totalXp): derives level (capped at 50) from total XP
+- rankForLevel(level): E, D, C, B, A or S
+- applyStreakBonus(xp, streakDays): +10 percent at 7 days, +25 percent at 30 days (daily streaks only)
+- localCheckinDate(now, timezone): applies the 3:00 AM grace window and returns the local date
+- periodStart(date, cadence): the date itself for daily, the Monday of that week for weekly
+
+### Config (/lib/config.ts)
+One file for every tunable number, so that rule changes don't need logic changes:
+- level cap, XP curve constant and exponent, rank thresholds
+- daily base XP cap (150), max active quests (8), allowed XP values (10, 20, 30)
+- watcher type thresholds (40 percent genre, 60 percent pre-2010, 50 percent current seasons with 30 percent drop rate, 150 episodes per month)
+- grace hour (3), cache TTLs
+- `CONFIG_VERSION`: bump when any threshold changes. It is part of every cache key.
+
+## Database (Supabase, added with quests)
+
+### profiles
+id (uuid, = auth user id), username (unique), anilist_user_id (unique, from OAuth), anilist_username (unique), timezone (default 'UTC'), total_xp (default 0), current_streak, longest_streak, last_checkin_date, watcher_type, is_public (default true), created_at
+
+- Level is not stored. It is derived from `total_xp`, so the two cannot drift apart.
+- `anilist_username` and `anilist_user_id` are only set from the verified OAuth identity, never from client input. This stops someone from claiming another user's AniList name and showing a rank on it.
+- `current_streak` is the daily streak: a day counts when at least one daily quest was checked in. Weekly quests do not count toward it.
+
+### quests
+id, user_id, name, stat (enum: strength, intelligence, discipline, charisma, vitality), xp_value (check in 10, 20, 30), cadence (enum: daily, weekly), weekly_streak (default 0), active, created_at
+
+### checkins
+id, quest_id, user_id, period_start (date), base_xp, xp_awarded, created_at
+Unique on (quest_id, period_start).
+
+- For daily quests `period_start` is the user's local date (after the grace window). For weekly quests it is the Monday of that week.
+- `base_xp` is the XP before the streak bonus (used for the daily cap). `xp_awarded` is what the user received.
+
+### stats
+user_id, strength_xp, intelligence_xp, discipline_xp, charisma_xp, vitality_xp
+
+- Stores XP per stat. Stat levels are derived with `levelFromXp`.
+
+### wrapped_cache
+anilist_username, day (date), config_version, payload (jsonb), created_at
+Unique on (anilist_username, day, config_version).
+Only the server (service role) reads and writes it.
+
+### events
+id, name (`wrapped_generated`, `card_exported`, `quest_created`, `quest_checkin`), anilist_username (nullable), user_id (nullable), props (jsonb), created_at
+Used for the success metrics. Insert only, through the server.
+
+### Views and functions
+- `public_profiles` view: username, level (via the SQL function `level_from_xp`), rank, watcher_type. Only rows where `is_public = true`. It never exposes `id`, `user_id`, timezone or XP details.
+- `level_from_xp` and `rank_for_level` SQL functions mirror the TypeScript ones. A parity test runs both against the same values.
+- `check_in(quest_id)` Postgres function (security definer). See Check-in flow.
+
+### Row level security
+- Users can read their own rows in profiles, quests, checkins and stats.
+- Users can insert and update their own quests (name, stat, xp_value, cadence, active). They cannot touch XP, streak, level or watcher type columns.
+- Clients have no insert or update access to `checkins`, `stats` or any XP or streak column. These change only through `check_in()`.
+- `public_profiles` is the only thing readable without auth.
+
+## Check-in flow
+`POST /api/checkins { quest_id }` calls the `check_in(quest_id)` function, which runs in one transaction:
+1. Load the quest and check that it belongs to the caller and is active.
+2. Work out the user's local date from their timezone and the grace window, then the `period_start`.
+3. Insert the check-in. The unique key rejects duplicates, so a double click or a retry returns the existing result and awards nothing twice.
+4. Apply the daily cap: the sum of today's `base_xp` is limited to 150.
+5. Update the streak (continue, or reset to 1 if a day was missed), then apply the streak bonus to daily quests.
+6. Add XP to `profiles.total_xp` and to the matching column in `stats`.
+7. Return the new level, rank, streak and XP awarded.
+
+The client never sends an XP value. XP comes only from the quest record.
+
+Creating a quest is limited to 8 active quests, enforced in the database with a trigger or check function, not only in the UI.
+
+## Routes
+```
+GET    /                          landing and username input
+GET    /wrapped/[username]        result page with share buttons, Open Graph tags point to /api/card
+GET    /api/wrapped/[username]    returns Wrapped JSON (cached)
+GET    /api/card/[username]       returns PNG (query: format=story or square)
+GET    /u/[username]              public profile, Open Graph tags point to /api/card
+GET    /quests                    quest board (auth)
+POST   /api/quests                create or update a quest (auth)
+POST   /api/checkins              check in (auth)
+GET    /auth/callback             AniList OAuth callback
+DELETE /api/profile               delete profile and all related data (auth)
+POST   /api/events                record a share or export event
+```
+
+## Caching
+- AniList data: stored in `wrapped_cache` by (username, day, config_version). A manual refresh is allowed with a cooldown (suggested 10 minutes).
+- Card images: served with CDN cache headers. The key is username, day, format and config_version.
+- The rank and level badge on the card is read at render time from `public_profiles` and is not part of the cached Wrapped data. Cards for users who have a profile use a short CDN TTL (about 5 minutes), so a level up shows quickly. Cards for users without a profile use a long TTL.
+
+## Rules
+- Check-ins are idempotent per quest per period (day for daily, week for weekly).
+- Dates use the user's local timezone stored on the profile, with the 3:00 AM grace window.
+- Never trust client XP values. Compute XP on the server from the quest record.
+- Cache AniList responses and generated cards by username plus day plus config version.
+- Validate usernames before any upstream call: letters, digits and underscore only, 2 to 20 characters. Reject anything else with 400.
+- Rate limit `/api/wrapped`, `/api/card` and `/api/events` per IP, because they trigger upstream calls and image rendering.
+- Never return internal ids from public endpoints.
+- Deleting a profile removes its quests, check-ins, stats and events, and clears its cache entries.
