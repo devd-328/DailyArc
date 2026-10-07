@@ -1,6 +1,6 @@
 # DailyArc: Project Brain
 
-Read this file first in every session. Then read the file that matches your task:
+Read this file first in every session, then read RULES.md (how to avoid guessing). Then read the file that matches your task:
 - Product decisions: PRODUCT.md
 - Data, APIs, logic: ARCHITECTURE.md
 - Anything visual: DESIGN_SYSTEM.md
@@ -18,7 +18,7 @@ Dev Das, CS student, frontend focused. Prefer clear, boring, well-typed code ove
 ## Proposed stack (change here if it changes)
 - Next.js (App Router), TypeScript, Tailwind CSS
 - Supabase (auth, Postgres) added only when quests ship
-- AniList GraphQL API for anime data (public profiles, no login)
+- AniList GraphQL API for anime data (the card needs no login, only a public username; quests use AniList OAuth sign in, see ARCHITECTURE.md)
 - Card image export: server-side render with Satori or @vercel/og
 - Hosting: Vercel
 
@@ -30,7 +30,7 @@ Dev Das, CS student, frontend focused. Prefer clear, boring, well-typed code ove
 - Keep stat and XP logic in pure functions under /lib so they can be unit tested.
 - Never use copyrighted anime art, logos or the Solo Leveling name. Original styling inspired by the vibe only.
 - Never use em dashes in any copy, captions or UI text. Use commas, periods or colons.
-- Cache AniList responses (at least 1 hour) and respect rate limits.
+- Cache AniList responses and cards as defined in ARCHITECTURE.md (by username, day and config version) and respect rate limits.
 
 ## Visual source of truth
 The approved home screen mockup is at https://claude.ai/artifact/BhtbrDNSD2p78VAWnFrmXg and its exact values live in the Home screen reference section of DESIGN_SYSTEM.md. New screens must match that look exactly.
@@ -38,9 +38,9 @@ The approved home screen mockup is at https://claude.ai/artifact/BhtbrDNSD2p78VA
 ## Folder layout
 /app            routes and pages
 /components     UI components (card, stat screen, quest row)
-/lib            xp.ts, ranks.ts, watcherType.ts, anilist.ts
+/lib            pure functions and config (see ARCHITECTURE.md): xp.ts, ranks.ts, watcherType.ts, stats.ts, streaks.ts, anilist.ts, config.ts
 /styles         tokens.css
-/docs           these brain files
+/brain          these brain files
 
 ## Definition of done
 Works on mobile width first, matches tokens, has no console errors, and the card exports cleanly at 1080x1920 and 1080x1080.
