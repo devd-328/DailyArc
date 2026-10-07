@@ -1,19 +1,9 @@
 import type { Rank } from "@/lib/config";
 import { rankForLevel } from "@/lib/ranks";
 import type { HotTake } from "@/lib/types";
+import type { WrappedCardData } from "@/lib/wrapped";
 
-export type WrappedCardData = {
-  username: string;
-  watcherTypeLabel: string;
-  watcherLine: string;
-  hours: number;
-  episodes: number;
-  completionRate: number | null;
-  topGenres: readonly string[];
-  hotTake: HotTake | null;
-  /** Null for a visitor with no linked profile: no rank badge. */
-  level: number | null;
-};
+export type { WrappedCardData };
 
 const GENRE_FILL = ["var(--sun)", "var(--teal)", "var(--pink)"] as const;
 

@@ -133,6 +133,21 @@
   }
 }
 
+/* Result page preview. 0.26 matches DESIGN_SYSTEM.md for the Wrapped result. */
+.wrapped-result-card {
+  --card-preview-scale: 0.26;
+}
+@media (min-width: 768px) {
+  .wrapped-result-card {
+    --card-preview-scale: 0.32;
+  }
+}
+@media (min-width: 1024px) {
+  .wrapped-result-card {
+    --card-preview-scale: 0.38;
+  }
+}
+
 /* Halftone dots behind hero areas only, fading out downward. */
 .halftone {
   position: relative;

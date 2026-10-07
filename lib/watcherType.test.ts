@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ComputedStats } from "./types";
-import { pickWatcherType } from "./watcherType";
+import { WATCHER_TYPES } from "./config";
+import { pickWatcherType, WATCHER_TYPE_LABELS, WATCHER_TYPE_LINES } from "./watcherType";
 
 function stats(overrides: Partial<ComputedStats> = {}): ComputedStats {
   return {
@@ -39,6 +40,12 @@ describe("pickWatcherType", () => {
     ).toEqual({ type: "wanderer", runnerUp: null });
   });
 
+  it("does not use Wanderer as a runner-up", () => {
+    expect(
+      pickWatcherType(stats({ topGenres: [{ name: "Action", count: 9, share: 0.45 }] })),
+    ).toEqual({ type: "genre_loyalist", runnerUp: null });
+  });
+
   it("picks Genre Loyalist first, even if the user also binges", () => {
     expect(
       pickWatcherType(
@@ -71,5 +78,14 @@ describe("pickWatcherType", () => {
 
   it("picks Binge Demon at 150 episodes per month", () => {
     expect(pickWatcherType(stats({ episodesPerMonth: 150 })).type).toBe("binge_demon");
+  });
+});
+
+describe("watcher type copy", () => {
+  it("has a label and line for every type", () => {
+    for (const type of WATCHER_TYPES) {
+      expect(WATCHER_TYPE_LABELS[type].length).toBeGreaterThan(0);
+      expect(WATCHER_TYPE_LINES[type].length).toBeGreaterThan(0);
+    }
   });
 });

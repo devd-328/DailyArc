@@ -188,7 +188,7 @@ POST   /api/events                record a share or export event
 ```
 
 ## Caching
-- AniList data: stored in `wrapped_cache` by (username, day, config_version). A manual refresh is allowed with a cooldown (suggested 10 minutes).
+- AniList data: stored in `wrapped_cache` by (username, day, config_version). A manual refresh is allowed with a cooldown (suggested 10 minutes). Until Supabase ships, the same key is stored with Next.js `use cache` (`cacheLife('wrapped')`: revalidate 24 hours).
 - Card images: served with CDN cache headers. The key is username, day, format and config_version.
 - The rank and level badge on the card is read at render time from `public_profiles` and is not part of the cached Wrapped data. Cards for users who have a profile use a short CDN TTL (about 5 minutes), so a level up shows quickly. Cards for users without a profile use a long TTL.
 

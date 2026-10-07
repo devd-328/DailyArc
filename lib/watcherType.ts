@@ -9,6 +9,20 @@ export const WATCHER_TYPE_LABELS: Record<WatcherType, string> = {
   wanderer: "Wanderer",
 };
 
+/**
+ * One-line type copy on the card.
+ * Binge Demon is from mockups/screens-auth.html. The others restate the
+ * PRODUCT.md rules in plain language so the card has a sentence until
+ * the owner writes final flavor copy.
+ */
+export const WATCHER_TYPE_LINES: Record<WatcherType, string> = {
+  genre_loyalist: "One genre makes up more than 40 percent of your list.",
+  classic_purist: "At least 60 percent of your list aired before 2010.",
+  seasonal_sampler: "Most of your list is from recent seasons, and your drop rate is high.",
+  binge_demon: "You finish whole seasons before the weekend is over.",
+  wanderer: "No single watching pattern stood out.",
+};
+
 export type WatcherPick = {
   type: WatcherType;
   runnerUp: WatcherType | null;
@@ -42,6 +56,7 @@ export function pickWatcherType(stats: ComputedStats): WatcherPick {
 
   const hits: WatcherType[] = [];
   for (const type of WATCHER_TYPES) {
+    if (type === "wanderer") continue;
     if (matches(type, stats)) hits.push(type);
   }
   return { type: hits[0] ?? "wanderer", runnerUp: hits[1] ?? null };

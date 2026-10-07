@@ -5,7 +5,7 @@
  * Bump CONFIG_VERSION whenever a value that affects Wrapped results changes
  * (watcher thresholds, stat rules). It is part of every cache key.
  */
-export const CONFIG_VERSION = 1;
+export const CONFIG_VERSION = 2;
 
 export const RANKS = ["E", "D", "C", "B", "A", "S"] as const;
 export type Rank = (typeof RANKS)[number];
