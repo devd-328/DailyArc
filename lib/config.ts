@@ -10,6 +10,17 @@ export const CONFIG_VERSION = 1;
 export const RANKS = ["E", "D", "C", "B", "A", "S"] as const;
 export type Rank = (typeof RANKS)[number];
 
+export const SEASONS = ["WINTER", "SPRING", "SUMMER", "FALL"] as const;
+export type Season = (typeof SEASONS)[number];
+
+/**
+ * Calendar month (1 to 12) in which each season starts. NOT VERIFIED against AniList.
+ * This is the common anime convention: Winter Jan to Mar, Spring Apr to Jun,
+ * Summer Jul to Sep, Fall Oct to Dec. AniList's own schema docs may define the
+ * months differently. Check the AniList docs before launch and fix it here.
+ */
+export const seasonStartMonth: Record<Season, number> = { WINTER: 1, SPRING: 4, SUMMER: 7, FALL: 10 };
+
 export const STATS = ["strength", "intelligence", "discipline", "charisma", "vitality"] as const;
 export type Stat = (typeof STATS)[number];
 
@@ -60,6 +71,8 @@ export const watcher = {
   seasonalSamplerMinShare: 0.5,
   /** Drop rate above this (0 to 1) is also required for Seasonal Sampler. */
   seasonalSamplerMinDropRate: 0.3,
+  /** "Recent" means the current season plus the previous 2, so 3 seasons in total. */
+  seasonalSamplerRecentSeasons: 3,
   /** Average episodes per month over the last 12 months. */
   bingeDemonMinEpisodesPerMonth: 150,
   bingeWindowMonths: 12,

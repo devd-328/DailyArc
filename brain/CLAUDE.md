@@ -52,7 +52,7 @@ The approved mockups are the HTML files in /mockups (start with home-v2.html). T
 ## Folder layout
 /app            routes and pages. app/fonts holds the self-hosted katakana subset for sound effects
 /components     UI components (card, stat screen, quest row)
-/lib            pure functions and config. Exists now: config.ts. Planned (see ARCHITECTURE.md): xp.ts, ranks.ts, watcherType.ts, stats.ts, streaks.ts, anilist.ts
+/lib            pure functions and config. Exists now: config.ts, types.ts, xp.ts, ranks.ts, streaks.ts, seasons.ts, stats.ts, watcherType.ts, username.ts. Planned: anilist.ts
 /styles         tokens.css (design tokens, imported by app/globals.css and mapped to Tailwind there)
 /brain          these brain files
 /mockups        approved HTML mockups and renders
@@ -60,7 +60,8 @@ The approved mockups are the HTML files in /mockups (start with home-v2.html). T
 Tests sit next to the code they test (for example lib/config.test.ts).
 
 ## Setup status
-Done: Next.js scaffold, Tailwind with design tokens, fonts (Dela Gothic One, Zen Kaku Gothic New, katakana subset), Vitest, `lib/config.ts`.
+Done: Next.js scaffold, Tailwind with design tokens, fonts (Dela Gothic One, Zen Kaku Gothic New, katakana subset), Vitest, `lib/config.ts`, and the pure functions listed under /lib (with unit tests).
+Not done yet: AniList fetch, API routes, and the real landing and card UI.
 Placeholder: `app/page.tsx` is a temporary page that only proves the setup works. Replace it with the landing screen.
 Dark mode is not implemented (light first).
 
