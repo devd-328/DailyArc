@@ -44,6 +44,7 @@ If something is not in these files or in the code, it is not decided. Do not fil
 - Level is derived from total XP. Do not store it.
 - AniList scores are requested as POINT_100.
 - Validate usernames before any upstream call.
+- Starter and side quest text comes only from the approved template list. Do not invent quest text. The content rules in PRODUCT.md apply.
 - An AniList username counts as owned only after the AniList link flow. Never trust a typed username as identity.
 - The Wrapped card works without an account. Do not put sign-in in front of it.
 - Cache AniList responses and cards as described in ARCHITECTURE.md. Respect rate limits.

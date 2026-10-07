@@ -11,6 +11,7 @@ Included:
 - Anime Wrapped card from an AniList username
 - 5 watcher types
 - Quest tracker: create habits, daily check-in, XP, level, rank
+- Starter quests: ready-made suggestions on the empty quests screen, added with one tap
 - Stat screen with 5 stats
 - Public profile link that shows card and rank
 - Accounts: one screen to sign in or sign up with AniList, Google or email
@@ -19,6 +20,7 @@ Included:
 
 Not in v1:
 - MyAnimeList import, friends and leaderboards, push notifications, native apps, payments, user-uploaded art
+- Daily side quest (random optional quest). Planned for v1.1, see "Starter quests and side quests"
 
 ## Anime Wrapped stats
 - Total hours watched and episodes
@@ -82,6 +84,29 @@ S rank is meant to be prestigious, but reachable for a dedicated user. The origi
 - Grace window: a check-in before 3:00 AM local time counts for the previous day.
 - A missed day resets the streak to 0. No XP is removed.
 
+## Starter quests and side quests
+Random quests are an extra on top of the user's own habits. They never replace them.
+
+### Starter quests (v1)
+- The empty quests screen shows 5 to 8 ready-made quests. Tapping Add copies one into the user's quests (a normal daily quest, with the template's name, stat and XP).
+- They count toward the 8 quest limit once added.
+- The user can still write their own quest at any time.
+
+### Daily side quest (v1.1)
+- One random quest per day, optional, shown above the user's own quests.
+- Picked from a hand-written pool of about 40 to 60 templates. Never the same as yesterday's.
+- XP is the template's fixed value (10, 20 or 30). No streak bonus applies.
+- It counts inside the daily XP cap (150 base XP), so it is not a free XP source.
+- It does not affect the streak, does not count toward the 8 quest limit, and is not part of the "x of y done" count.
+- The user can reroll it once per day (only before completing it).
+- It expires at the end of the user's local day (same 3:00 AM grace window). Skipping it costs nothing.
+
+### Quest template content rules
+- Templates are written and approved by the owner. Agents must not invent quest text.
+- Positive, small and doable in a day. No dieting, fasting, weight loss, extreme workouts, skipping sleep, spending money, meeting strangers, or anything physically risky.
+- Nothing that depends on age, body, money or family situation. The audience starts at 15.
+- Each template has a name (under 40 characters, sentence case, no em dashes), one stat, and an XP value of 10, 20 or 30.
+
 ## Connection between the two
 The Wrapped card can show the user's real-life rank and level next to their watcher type. Example: "S-rank Binge Demon".
 
@@ -134,4 +159,6 @@ Profile tab (private, own account only):
 - Username rules for users who sign up without AniList (length, characters, reserved names)
 - Whether to read private AniList lists after linking (v1: no)
 - Which watcher types to add after launch
+- The starter quest list and the side quest pool (owner writes and approves them)
+- Whether side quests should be flavored by watcher type later (for example "Watch one episode, then stop" for Binge Demon)
 - Whether the watcher type should give a small cosmetic bonus to quests (for example a title or badge)

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DailyArc starter quests and side quest demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EEF2F6; --ink: #1B2559; --pink: #FF5A8A; --sun: #FFC93C; --teal: #2FA39A;
+    --card: #FFFFFF; --paper-2: #DDE4EE; --ink-soft: #5B6794; --rank-c: #3B6CFF; --rank-e: #9AA7B8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Zen Kaku Gothic New", sans-serif; background: #C9D0DC; color: var(--ink); padding: 28px 24px 40px; font-variant-numeric: tabular-nums; }
+  h1.page { font-family: "Dela Gothic One", sans-serif; font-weight: 400; font-size: 22px; text-align: center; }
+  p.sub { text-align: center; font-size: 14px; color: var(--ink-soft); margin: 6px 0 24px; }
+  .row { display: flex; gap: 40px; justify-content: center; align-items: flex-start; }
+  .col { width: 390px; }
+  .label { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+  .label span { font-weight: 500; color: var(--ink-soft); }
+  .notes { margin-top: 14px; font-size: 13px; line-height: 1.55; }
+  .notes li { margin-left: 18px; }
+
+  .phone { width: 390px; height: 844px; background: var(--paper); border: 2px solid var(--ink); border-radius: 28px; overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 6px 6px 0 var(--ink); }
+  .screen { position: relative; padding: 24px 20px; flex: 1; overflow: hidden; }
+  .screen.dots::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 360px; background-image: radial-gradient(circle, #C9D3E3 1.6px, transparent 1.8px); background-size: 8px 8px; -webkit-mask-image: linear-gradient(#000, transparent); mask-image: linear-gradient(#000, transparent); pointer-events: none; }
+  .screen > * { position: relative; }
+
+  .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .user { background: var(--sun); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); padding: 6px 14px; font-weight: 700; font-size: 15px; transform: rotate(-2deg); display: inline-block; }
+  .pill { background: #fff; border: 2px solid var(--ink); border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 14px; }
+  .dela { font-family: "Dela Gothic One", sans-serif; font-weight: 400; }
+  .fine { font-size: 13px; font-weight: 500; color: var(--ink-soft); margin-top: 8px; }
+
+  .btn { font-family: inherit; font-weight: 700; font-size: 15px; color: var(--ink); background: #fff; border: 2px solid var(--ink); border-radius: 10px; box-shadow: 3px 3px 0 var(--ink); padding: 10px 14px; min-height: 48px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn.pink { background: var(--pink); }
+  .btn.full { width: 100%; }
+  .btn.sm { min-height: 44px; padding: 8px 14px; }
+
+  .panel { background: var(--card); border: 2px solid var(--ink); border-radius: 6px; box-shadow: 4px 4px 0 var(--ink); padding: 16px; }
+  .rank { border: 2px solid var(--ink); border-radius: 2px; display: grid; place-items: center; font-family: "Dela Gothic One", sans-serif; line-height: 1; flex: none; }
+  .rank.c { background: var(--rank-c); color: #fff; }
+  .rank.e { background: var(--rank-e); color: var(--ink); }
+  .xpbar { height: 14px; border: 2px solid var(--ink); background: var(--paper); margin-top: 10px; }
+  .xpbar i { display: block; height: 100%; background: repeating-linear-gradient(45deg, #FFC93C 0 6px, #F2B51F 6px 9px); border-right: 2px solid var(--ink); }
+  .xpcap { font-size: 13px; font-weight: 500; color: var(--ink-soft); margin-top: 6px; }
+
+  .sec { display: flex; justify-content: space-between; align-items: baseline; margin: 18px 0 8px; }
+  .sec h2 { font-family: "Dela Gothic One", sans-serif; font-weight: 400; font-size: 22px; }
+  .sec .count { font-size: 14px; font-weight: 700; color: var(--ink-soft); }
+
+  .q { background: #fff; border: 2px solid var(--ink); border-radius: 6px; box-shadow: 3px 3px 0 var(--ink); padding: 10px 12px; display: flex; align-items: center; gap: 12px; min-height: 66px; margin-bottom: 10px; }
+  .box { width: 28px; height: 28px; flex: none; border: 2px solid var(--ink); background: #fff; display: grid; place-items: center; }
+  .q.done .box { background: var(--teal); }
+  .q.done .name { color: var(--ink-soft); text-decoration: line-through; }
+  .q .body { flex: 1; min-width: 0; }
+  .name { font-size: 16px; font-weight: 700; line-height: 1.25; }
+  .meta { display: flex; gap: 6px; margin-top: 5px; align-items: center; }
+  .chip { background: var(--paper-2); border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 700; }
+  .xp { background: var(--sun); border: 2px solid var(--ink); border-radius: 999px; padding: 1px 9px; font-size: 13px; font-weight: 700; flex: none; white-space: nowrap; }
+  .added { background: var(--teal); border: 2px solid var(--ink); border-radius: 10px; padding: 8px 12px; min-height: 44px; display: flex; align-items: center; font-size: 14px; font-weight: 700; flex: none; }
+
+  /* side quest */
+  .side { position: relative; background: var(--paper-2); border: 2px solid var(--ink); border-radius: 6px; box-shadow: 4px 4px 0 var(--ink); padding: 20px 16px 14px; margin-top: 28px; }
+  .side .tape { position: absolute; top: -15px; left: 14px; background: var(--sun); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); padding: 2px 12px; font-weight: 700; font-size: 14px; transform: rotate(-2deg); }
+  .side .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .side .chip { background: #fff; }
+  .side .btns { display: flex; gap: 10px; margin-top: 12px; }
+  .side .btns .btn { flex: 1; }
+  .side.done { background: #fff; }
+  .side.done .name { color: var(--ink-soft); text-decoration: line-through; }
+  .stamp { width: 30px; height: 30px; flex: none; background: var(--teal); border: 2px solid var(--ink); display: grid; place-items: center; }
+
+  .tabs { background: var(--ink); height: 76px; display: flex; justify-content: space-around; align-items: center; padding: 0 8px; flex: none; }
+  .tab { min-width: 72px; height: 52px; border-radius: 10px; color: var(--paper); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 13px; font-weight: 700; border: 2px solid transparent; }
+  .tab svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .tab.active { background: var(--pink); color: var(--ink); border-color: var(--paper); }
+</style>
+</head>
+<body>
+  <h1 class="page">DailyArc, starter quests and side quest</h1>
+  <p class="sub">Screen 1 is for v1. Screens 2 and 3 are for v1.1. Quest names are placeholders until the owner approves the pool.</p>
+
+  <div class="row">
+
+    <!-- 1 Empty state with starter suggestions -->
+    <div class="col">
+      <div class="label">1. First quests <span>(v1, new user)</span></div>
+      <div class="phone">
+        <div class="screen dots">
+          <div class="head">
+            <div class="user">mira_k</div>
+            <div class="pill">Streak: 0 days</div>
+          </div>
+          <div class="panel" style="display:flex; gap:16px; align-items:center;">
+            <div class="rank e" style="width:76px; height:76px; font-size:48px;">E</div>
+            <div style="flex:1; min-width:0;">
+              <div class="dela" style="font-size:32px; line-height:1.1;">Level 1</div>
+              <div class="xpbar"><i style="width:0%"></i></div>
+              <div class="xpcap">0 of 12 XP to level 2</div>
+            </div>
+          </div>
+
+          <div class="sec"><h2>Pick your first quests</h2><span class="count">Tap Add</span></div>
+
+          <div class="q">
+            <div class="body"><div class="name">Drink a big glass of water</div><div class="meta"><span class="chip">Vitality</span><span class="xp">+10 XP</span></div></div>
+            <button class="btn sm" type="button">Add</button>
+          </div>
+          <div class="q">
+            <div class="body"><div class="name">Walk for 20 minutes</div><div class="meta"><span class="chip">Vitality</span><span class="xp">+20 XP</span></div></div>
+            <button class="btn sm" type="button">Add</button>
+          </div>
+          <div class="q">
+            <div class="body"><div class="name">Read 10 pages</div><div class="meta"><span class="chip">Intelligence</span><span class="xp">+10 XP</span></div></div>
+            <div class="added">Added</div>
+          </div>
+          <div class="q">
+            <div class="body"><div class="name">Study for 25 minutes</div><div class="meta"><span class="chip">Discipline</span><span class="xp">+20 XP</span></div></div>
+            <button class="btn sm" type="button">Add</button>
+          </div>
+          <div class="q">
+            <div class="body"><div class="name">Message a friend</div><div class="meta"><span class="chip">Charisma</span><span class="xp">+10 XP</span></div></div>
+            <button class="btn sm" type="button">Add</button>
+          </div>
+
+          <button class="btn full" style="margin-top:4px;" type="button">+ Write my own quest</button>
+          <div class="fine" style="text-align:center; margin-top:6px;">1 of 8 quests used</div>
+        </div>
+        <div class="tabs" data-tabs="Quests"></div>
+      </div>
+      <ul class="notes">
+        <li>Replaces the blank screen a new user sees. One tap copies a ready-made quest.</li>
+        <li>Rank E, level 1: 12 XP to the next level (12 x 1^1.5).</li>
+        <li>The XP shown is set by the server, not the client.</li>
+      </ul>
+    </div>
+
+    <!-- 2 Home with daily side quest -->
+    <div class="col">
+      <div class="label">2. Daily side quest <span>(v1.1)</span></div>
+      <div class="phone">
+        <div class="screen dots">
+          <div class="head" style="margin-bottom:16px;">
+            <div class="user">dev_das</div>
+            <div class="pill">Streak: 12 days</div>
+          </div>
+          <div class="panel" style="display:flex; gap:16px; align-items:center;">
+            <div class="rank c" style="width:76px; height:76px; font-size:48px;">C</div>
+            <div style="flex:1; min-width:0;">
+              <div class="dela" style="font-size:32px; line-height:1.1;">Level 27</div>
+              <div class="xpbar"><i style="width:38%"></i></div>
+              <div class="xpcap">640 of 1,684 XP to level 28</div>
+            </div>
+          </div>
+
+          <div class="side">
+            <div class="tape">Side quest</div>
+            <div class="top">
+              <div>
+                <div class="name">Tidy your desk for 10 minutes</div>
+                <div class="meta"><span class="chip">Discipline</span><span class="xp">+20 XP</span></div>
+              </div>
+            </div>
+            <div class="btns">
+              <button class="btn pink" type="button">Done</button>
+              <button class="btn" type="button">Reroll (1 left)</button>
+            </div>
+          </div>
+          <div class="fine">Optional. No streak bonus. Resets tomorrow.</div>
+
+          <div class="sec"><h2>Today's quests</h2><span class="count">2 of 4 done</span></div>
+          <div class="q done">
+            <div class="box"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"/></svg></div>
+            <div class="body"><div class="name">Gym session</div><div class="meta"><span class="chip">Strength</span></div></div>
+            <div class="xp">+33 XP</div>
+          </div>
+          <div class="q done">
+            <div class="box"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"/></svg></div>
+            <div class="body"><div class="name">Read 20 pages</div><div class="meta"><span class="chip">Intelligence</span></div></div>
+            <div class="xp">+22 XP</div>
+          </div>
+          <div class="q">
+            <div class="box"></div>
+            <div class="body"><div class="name">Study block, 90 min</div><div class="meta"><span class="chip">Discipline</span></div></div>
+            <div class="xp">+33 XP</div>
+          </div>
+        </div>
+        <div class="tabs" data-tabs="Quests"></div>
+      </div>
+      <ul class="notes">
+        <li>One optional card above the user's own quests. Taped label marks it as special.</li>
+        <li>It gives the template's fixed XP. The 12-day streak bonus does not apply, so it shows +20, not +22.</li>
+        <li>Reroll once a day. Skipping costs nothing.</li>
+      </ul>
+    </div>
+
+    <!-- 3 Side quest done -->
+    <div class="col">
+      <div class="label">3. Side quest done <span>(v1.1)</span></div>
+      <div class="phone">
+        <div class="screen dots">
+          <div class="head" style="margin-bottom:16px;">
+            <div class="user">dev_das</div>
+            <div class="pill">Streak: 12 days</div>
+          </div>
+          <div class="panel" style="display:flex; gap:16px; align-items:center;">
+            <div class="rank c" style="width:76px; height:76px; font-size:48px;">C</div>
+            <div style="flex:1; min-width:0;">
+              <div class="dela" style="font-size:32px; line-height:1.1;">Level 27</div>
+              <div class="xpbar"><i style="width:39%"></i></div>
+              <div class="xpcap">660 of 1,684 XP to level 28</div>
+            </div>
+          </div>
+
+          <div class="side done">
+            <div class="tape">Side quest</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="stamp"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"/></svg></div>
+              <div style="flex:1; min-width:0;">
+                <div class="name">Tidy your desk for 10 minutes</div>
+                <div class="meta"><span class="chip">Discipline</span></div>
+              </div>
+              <div class="xp">+20 XP</div>
+            </div>
+          </div>
+          <div class="fine">Side quest done. A new one arrives tomorrow.</div>
+
+          <div class="sec"><h2>Today's quests</h2><span class="count">2 of 4 done</span></div>
+          <div class="q done">
+            <div class="box"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"/></svg></div>
+            <div class="body"><div class="name">Gym session</div><div class="meta"><span class="chip">Strength</span></div></div>
+            <div class="xp">+33 XP</div>
+          </div>
+          <div class="q done">
+            <div class="box"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"/></svg></div>
+            <div class="body"><div class="name">Read 20 pages</div><div class="meta"><span class="chip">Intelligence</span></div></div>
+            <div class="xp">+22 XP</div>
+          </div>
+          <div class="q">
+            <div class="box"></div>
+            <div class="body"><div class="name">Study block, 90 min</div><div class="meta"><span class="chip">Discipline</span></div></div>
+            <div class="xp">+33 XP</div>
+          </div>
+        </div>
+        <div class="tabs" data-tabs="Quests"></div>
+      </div>
+      <ul class="notes">
+        <li>The card turns white with a teal check, like a finished regular quest. The buttons go away.</li>
+        <li>XP bar moved by the +20 (640 to 660).</li>
+        <li>The "2 of 4 done" count stays about the user's own quests. Side quests are not counted in it.</li>
+      </ul>
+    </div>
+  </div>
+
+<script>
+  var ICONS = {
+    Quests: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M8 12.5l3 3 5-6"/></svg>',
+    Stats: '<svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>',
+    Cards: '<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h6M9 12h6"/></svg>',
+    Profile: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4-6 8-6s7 1.5 8 6"/></svg>'
+  };
+  document.querySelectorAll('[data-tabs]').forEach(function (el) {
+    var active = el.getAttribute('data-tabs');
+    el.innerHTML = ['Quests', 'Stats', 'Cards', 'Profile'].map(function (t) {
+      return '<div class="tab' + (t === active ? ' active' : '') + '">' + ICONS[t] + t + '</div>';
+    }).join('');
+  });
+</script>
+</body>
+</html>

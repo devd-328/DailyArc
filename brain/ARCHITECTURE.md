@@ -45,6 +45,7 @@ One file for every tunable number, so that rule changes don't need logic changes
 - daily base XP cap (150), max active quests (8), allowed XP values (10, 20, 30)
 - watcher type thresholds (40 percent genre, 60 percent pre-2010, 50 percent current seasons with 30 percent drop rate, 150 episodes per month)
 - grace hour (3), cache TTLs
+- starter quests shown (5 to 8), side quest rerolls per day (1)
 - `CONFIG_VERSION`: bump when any threshold changes. It is part of every cache key.
 
 ## Auth
@@ -80,7 +81,7 @@ id (uuid, = auth user id), username (unique), anilist_user_id (nullable, unique)
 - `current_streak` is the daily streak: a day counts when at least one daily quest was checked in. Weekly quests do not count toward it.
 
 ### quests
-id, user_id, name, stat (enum: strength, intelligence, discipline, charisma, vitality), xp_value (check in 10, 20, 30), cadence (enum: daily, weekly), weekly_streak (default 0), active, created_at
+id, user_id, name, stat (enum: strength, intelligence, discipline, charisma, vitality), xp_value (check in 10, 20, 30), cadence (enum: daily, weekly), weekly_streak (default 0), active, template_id (nullable, set when added from a starter quest), created_at
 
 ### checkins
 id, quest_id, user_id, period_start (date), base_xp, xp_awarded, created_at
@@ -99,8 +100,19 @@ anilist_username, day (date), config_version, payload (jsonb), created_at
 Unique on (anilist_username, day, config_version).
 Only the server (service role) reads and writes it.
 
+### quest_templates
+id, name, stat (same enum as quests), xp_value (check in 10, 20, 30), kind (enum: starter, side), active (default true), created_at
+- Content comes from a seed file in the repo, written and approved by the owner (see PRODUCT.md for the content rules). Agents do not invent rows.
+- Readable by signed-in users. No client writes.
+
+### side_quests (v1.1)
+id, user_id, local_date (date), template_id, base_xp, rerolled (default false), completed_at (nullable), created_at
+Unique on (user_id, local_date).
+- One row per user per local day. The row is created the first time the user opens the day, by the server, so a refresh shows the same quest.
+- `base_xp` is copied from the template when the row is created.
+
 ### events
-id, name (`wrapped_generated`, `card_exported`, `sign_in_started`, `sign_in_completed`, `anilist_linked`, `quest_created`, `quest_checkin`), anilist_username (nullable), user_id (nullable), props (jsonb), created_at
+id, name (`wrapped_generated`, `card_exported`, `sign_in_started`, `sign_in_completed`, `anilist_linked`, `quest_created`, `quest_checkin`, `starter_quest_added`, `side_quest_rerolled`, `side_quest_completed`), anilist_username (nullable), user_id (nullable), props (jsonb), created_at
 Used for the success metrics. Insert only, through the server.
 
 ### Views and functions
@@ -112,6 +124,7 @@ Used for the success metrics. Insert only, through the server.
 - Users can read their own rows in profiles, quests, checkins and stats.
 - Users can insert and update their own quests (name, stat, xp_value, cadence, active). They cannot touch XP, streak, level or watcher type columns.
 - Clients have no insert or update access to `checkins`, `stats` or any XP or streak column. These change only through `check_in()`.
+- Users can read `quest_templates` and their own `side_quests`. They cannot write to either. Side quests change only through server functions.
 - `public_profiles` is the only thing readable without auth.
 
 ## Check-in flow
@@ -119,7 +132,7 @@ Used for the success metrics. Insert only, through the server.
 1. Load the quest and check that it belongs to the caller and is active.
 2. Work out the user's local date from their timezone and the grace window, then the `period_start`.
 3. Insert the check-in. The unique key rejects duplicates, so a double click or a retry returns the existing result and awards nothing twice.
-4. Apply the daily cap: the sum of today's `base_xp` is limited to 150.
+4. Apply the daily cap: the sum of today's `base_xp` is limited to 150. In v1.1 this sum includes the day's completed side quest.
 5. Update the streak (continue, or reset to 1 if a day was missed), then apply the streak bonus to daily quests.
 6. Add XP to `profiles.total_xp` and to the matching column in `stats`.
 7. Return the new level, rank, streak and XP awarded.
@@ -127,6 +140,23 @@ Used for the success metrics. Insert only, through the server.
 The client never sends an XP value. XP comes only from the quest record.
 
 Creating a quest is limited to 8 active quests, enforced in the database with a trigger or check function, not only in the UI.
+
+## Starter quests and side quests
+
+### Starter quests (v1)
+- `GET /api/quest-templates?kind=starter` returns the active starter templates (5 to 8 are shown).
+- `POST /api/quests/from-template { template_id }` creates a normal daily quest by copying name, stat and XP from the template on the server. The client sends only the template id. The 8 quest limit applies.
+
+### Daily side quest (v1.1)
+- `GET /api/side-quest` returns today's side quest. If today's row does not exist, the server picks a random active `side` template that is not yesterday's, and inserts the row.
+- `POST /api/side-quest/reroll` is allowed once per day and only while not completed. It replaces the template with a different one and sets `rerolled`.
+- `POST /api/side-quest/complete` calls the `complete_side_quest()` Postgres function (security definer), in one transaction:
+  1. Load today's row for the caller (local date with the grace window). Reject if already completed.
+  2. Apply the daily cap together with that day's check-ins.
+  3. Set `completed_at`. Award exactly `base_xp`. No streak bonus. The streak is not changed.
+  4. Add XP to `profiles.total_xp` and to the matching column in `stats`.
+  5. Return the new level, rank and XP awarded.
+- Side quests never count toward the 8 quest limit or the "x of y done" count.
 
 ## Routes
 ```
@@ -146,6 +176,11 @@ GET    /cards                     own card, or the link AniList empty state (aut
 GET    /profile                   own account, AniList link, public page switch, settings (auth)
 POST   /api/quests                create or update a quest (auth)
 POST   /api/checkins              check in (auth)
+GET    /api/quest-templates       starter templates (auth)
+POST   /api/quests/from-template  add a starter quest (auth)
+GET    /api/side-quest            today's side quest (auth, v1.1)
+POST   /api/side-quest/reroll     reroll once per day (auth, v1.1)
+POST   /api/side-quest/complete   complete today's side quest (auth, v1.1)
 PATCH  /api/profile               update username, timezone, is_public (auth)
 POST   /api/profile/refresh-card  refresh own card data, cooldown applies (auth)
 DELETE /api/profile               delete profile, auth user and all related data (auth)
