@@ -13,6 +13,8 @@ Included:
 - Quest tracker: create habits, daily check-in, XP, level, rank
 - Stat screen with 5 stats
 - Public profile link that shows card and rank
+- Accounts: one screen to sign in or sign up with AniList, Google or email
+- Profile tab: account, AniList link, public page switch, settings
 - Shareable card image exports (9:16 and 1:1) and an Open Graph preview image for profile links
 
 Not in v1:
@@ -84,10 +86,27 @@ S rank is meant to be prestigious, but reachable for a dedicated user. The origi
 The Wrapped card can show the user's real-life rank and level next to their watcher type. Example: "S-rank Binge Demon".
 
 ## Accounts and persistence
-- Generating a Wrapped card needs no signup. Only an AniList username is required.
-- Quests need an account to store progress. Sign in with AniList OAuth (fits the audience and reuses the same data source). Email sign in can come later.
-- Anonymous quest progress is not supported in v1.
-- The public profile link is only created after sign in. It shows the card and rank, and users can switch it to private or delete it at any time.
+- Anyone can generate a Wrapped card for any public AniList username, with no account. This is the growth loop and stays open.
+- An account is required for quests, a profile and a public page. There is no anonymous quest progress in v1.
+- Sign in methods: AniList, Google, or email (a sign-in link, no password). One screen handles both sign in and sign up.
+- AniList can be linked at sign in or later from the Profile tab. Linking (OAuth) is the only way to prove ownership of an AniList username. A username typed into a form is never treated as owned.
+- A user who signs up with Google or email and never links AniList can still use quests. Their public page shows rank and level, but no card and no watcher type, and their Cards tab asks them to link AniList.
+- On first sign in the user picks a username (default: their AniList name if it is free). It is used in the public URL.
+- One AniList account can be linked to only one DailyArc account.
+- In v1 the AniList link is used only to prove identity. Private lists are not read.
+- The public page is created at sign in. It shows rank, level, watcher type and card (when linked). Users can switch it to private or delete the account at any time.
+
+## Screens: Cards and Profile tabs
+Cards tab:
+- Linked user: their own card, with "Save for story", "Save square", "Copy link" and a refresh button (cooldown applies).
+- Not linked: an empty state with a "Link AniList" button.
+
+Profile tab (private, own account only):
+- Header: username, rank, level, watcher type (if linked), best streak.
+- AniList: linked or not linked. Link or refresh card data.
+- Public page: on or off switch, and the link with a copy button.
+- Settings: timezone (detected automatically, editable), email.
+- Account: sign out, delete account and data.
 
 ## Sharing
 - Export card as image in 9:16 (TikTok, Instagram Stories) and 1:1 (X, Reddit, Instagram posts).
@@ -102,11 +121,17 @@ The Wrapped card can show the user's real-life rank and level next to their watc
 ## Success metrics
 - Cards generated per day
 - Share rate (card exports divided by cards generated)
-- Wrapped to quest conversion (share of card users who sign in and create a quest)
+- Wrapped to quest conversion (share of visitors who generated a card, then signed up and created a quest)
+- Sign-up completion rate (share of people who started sign in and finished it)
 - Day 7 return rate for quest users (cohort: users who created at least one quest)
+
+## Decided
+- Signup is not required for the first card. Anyone can look up a public AniList username. Accounts are required for quests, profile and public page.
+- Sign in with AniList, Google or email. AniList is linkable later.
 
 ## Open questions
 - Final product name and domain (the repo uses "DailyArc"; this affects share URLs)
-- Whether signup is required before the first card (default: no)
+- Username rules for users who sign up without AniList (length, characters, reserved names)
+- Whether to read private AniList lists after linking (v1: no)
 - Which watcher types to add after launch
 - Whether the watcher type should give a small cosmetic bonus to quests (for example a title or badge)

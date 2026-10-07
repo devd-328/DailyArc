@@ -19,7 +19,7 @@ If something is not in these files or in the code, it is not decided. Do not fil
 - If a small default is unavoidable, state it in your reply as "Assumption: ..." so it can be checked.
 - Never present a guess as a fact. Use "I think" or "not verified" when you are unsure.
 - If you cannot run or test something, say you did not run it. Never claim "tests pass" or "it works" without having run it.
-- Open questions listed in PRODUCT.md (product name and domain, signup before first card, post-launch watcher types) are unresolved. Do not pick an answer.
+- Open questions listed in PRODUCT.md (product name and domain, username rules for users without AniList, private list reading, post-launch watcher types) are unresolved. Do not pick an answer.
 
 ## 3. Never invent
 - **Files and paths:** check that a file, folder, function or export exists (search the repo) before importing or referencing it. Do not assume `/lib` helpers exist.
@@ -44,6 +44,8 @@ If something is not in these files or in the code, it is not decided. Do not fil
 - Level is derived from total XP. Do not store it.
 - AniList scores are requested as POINT_100.
 - Validate usernames before any upstream call.
+- An AniList username counts as owned only after the AniList link flow. Never trust a typed username as identity.
+- The Wrapped card works without an account. Do not put sign-in in front of it.
 - Cache AniList responses and cards as described in ARCHITECTURE.md. Respect rate limits.
 - No copyrighted anime art, logos or the Solo Leveling name.
 - No em dashes in any copy, captions or UI text. Use commas, periods or colons.

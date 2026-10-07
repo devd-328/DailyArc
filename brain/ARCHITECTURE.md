@@ -2,7 +2,7 @@
 
 ## Stack
 - Next.js (App Router, TypeScript)
-- Supabase: Postgres, Auth (AniList OAuth), row level security
+- Supabase: Postgres, Auth (email sign-in link and Google as built-in providers, AniList as a custom flow, see Auth), row level security
 - Image generation: `next/og` (Satori) in an API route
 - Hosting: Vercel (CDN caching for card images)
 - Analytics: PostHog, or the `events` table below
@@ -47,13 +47,36 @@ One file for every tunable number, so that rule changes don't need logic changes
 - grace hour (3), cache TTLs
 - `CONFIG_VERSION`: bump when any threshold changes. It is part of every cache key.
 
+## Auth
+Anyone can use the Wrapped card without an account. Accounts are needed for quests, profile and the public page.
+
+Sign in methods (one screen for sign in and sign up):
+- Email: a sign-in link, no password.
+- Google.
+- AniList.
+
+AniList note (to verify before building): Supabase Auth has no built-in AniList provider that I have confirmed. AniList uses OAuth 2 but is not a standard OpenID Connect provider. Plan: a custom route `/auth/anilist` redirects to AniList, `/auth/anilist/callback` exchanges the code on the server, calls the AniList `Viewer` query to get the verified id and name, then either links it to the signed-in user or signs in the user who already has that id (using the Supabase admin API). Check the current Supabase and AniList docs first. If this proves too costly, ship email and Google first and add AniList linking right after.
+
+Linking rules:
+- `anilist_user_id` and `anilist_username` are set only from the verified AniList response, never from client input.
+- An AniList id that is already linked to another account is rejected with a clear error.
+- A user with no linked AniList account can use quests. They have no card and no watcher type.
+
+Access:
+- Public (no login): `/`, `/login`, `/wrapped/[username]`, `/u/[username]`, `/api/wrapped/[username]`, `/api/card/[username]`.
+- Auth required: `/onboarding`, `/quests`, `/stats`, `/cards`, `/profile` and every write API. Signed-out requests are redirected to `/login`.
+
+First sign in goes through `/onboarding`: pick a username (default: the AniList name if it is free), and the timezone is detected from the browser and saved to the profile.
+
 ## Database (Supabase, added with quests)
 
 ### profiles
-id (uuid, = auth user id), username (unique), anilist_user_id (unique, from OAuth), anilist_username (unique), timezone (default 'UTC'), total_xp (default 0), current_streak, longest_streak, last_checkin_date, watcher_type, is_public (default true), created_at
+id (uuid, = auth user id), username (unique), anilist_user_id (nullable, unique), anilist_username (nullable, unique), timezone (default 'UTC'), total_xp (default 0), current_streak, longest_streak, last_checkin_date, watcher_type (nullable), is_public (default true), created_at
 
 - Level is not stored. It is derived from `total_xp`, so the two cannot drift apart.
-- `anilist_username` and `anilist_user_id` are only set from the verified OAuth identity, never from client input. This stops someone from claiming another user's AniList name and showing a rank on it.
+- `username` is the public name used in `/u/[username]`. It is chosen by the user and does not have to match the AniList name.
+- `anilist_username` and `anilist_user_id` are only set by the AniList link flow, never from client input. This stops someone from claiming another user's AniList name and showing a rank on it.
+- `watcher_type` is filled when the AniList account is linked and the Wrapped data has been computed. It stays null for users without AniList.
 - `current_streak` is the daily streak: a day counts when at least one daily quest was checked in. Weekly quests do not count toward it.
 
 ### quests
@@ -77,11 +100,11 @@ Unique on (anilist_username, day, config_version).
 Only the server (service role) reads and writes it.
 
 ### events
-id, name (`wrapped_generated`, `card_exported`, `quest_created`, `quest_checkin`), anilist_username (nullable), user_id (nullable), props (jsonb), created_at
+id, name (`wrapped_generated`, `card_exported`, `sign_in_started`, `sign_in_completed`, `anilist_linked`, `quest_created`, `quest_checkin`), anilist_username (nullable), user_id (nullable), props (jsonb), created_at
 Used for the success metrics. Insert only, through the server.
 
 ### Views and functions
-- `public_profiles` view: username, level (via the SQL function `level_from_xp`), rank, watcher_type. Only rows where `is_public = true`. It never exposes `id`, `user_id`, timezone or XP details.
+- `public_profiles` view: username, anilist_username (nullable, needed to render the card), level (via the SQL function `level_from_xp`), rank, watcher_type (nullable). Only rows where `is_public = true`. It never exposes `id`, `user_id`, email, timezone or XP details.
 - `level_from_xp` and `rank_for_level` SQL functions mirror the TypeScript ones. A parity test runs both against the same values.
 - `check_in(quest_id)` Postgres function (security definer). See Check-in flow.
 
@@ -107,16 +130,25 @@ Creating a quest is limited to 8 active quests, enforced in the database with a 
 
 ## Routes
 ```
-GET    /                          landing and username input
-GET    /wrapped/[username]        result page with share buttons, Open Graph tags point to /api/card
-GET    /api/wrapped/[username]    returns Wrapped JSON (cached)
-GET    /api/card/[username]       returns PNG (query: format=story or square)
+GET    /                          landing and username input (public)
+GET    /login                     sign in or sign up: AniList, Google, email (public)
+GET    /auth/callback             Supabase callback for email and Google
+GET    /auth/anilist              starts AniList OAuth (sign in or link)
+GET    /auth/anilist/callback     AniList OAuth callback
+GET    /onboarding                pick username, save timezone (auth, first sign in)
+GET    /wrapped/[username]        result page with share buttons, Open Graph tags point to /api/card (public)
+GET    /api/wrapped/[username]    returns Wrapped JSON (cached, public)
+GET    /api/card/[username]       returns PNG (query: format=story or square, public)
 GET    /u/[username]              public profile, Open Graph tags point to /api/card
 GET    /quests                    quest board (auth)
+GET    /stats                     stat screen (auth)
+GET    /cards                     own card, or the link AniList empty state (auth)
+GET    /profile                   own account, AniList link, public page switch, settings (auth)
 POST   /api/quests                create or update a quest (auth)
 POST   /api/checkins              check in (auth)
-GET    /auth/callback             AniList OAuth callback
-DELETE /api/profile               delete profile and all related data (auth)
+PATCH  /api/profile               update username, timezone, is_public (auth)
+POST   /api/profile/refresh-card  refresh own card data, cooldown applies (auth)
+DELETE /api/profile               delete profile, auth user and all related data (auth)
 POST   /api/events                record a share or export event
 ```
 
@@ -130,7 +162,8 @@ POST   /api/events                record a share or export event
 - Dates use the user's local timezone stored on the profile, with the 3:00 AM grace window.
 - Never trust client XP values. Compute XP on the server from the quest record.
 - Cache AniList responses and generated cards by username plus day plus config version.
-- Validate usernames before any upstream call: letters, digits and underscore only, 2 to 20 characters. Reject anything else with 400.
+- Validate usernames before any upstream call: letters, digits and underscore only, 2 to 20 characters. Reject anything else with 400. (AniList's own rules are not verified, check them before relying on this.)
+- A DailyArc `username` (public name) has the same character rules and must be unique. Reserved names (for example `api`, `login`, `u`, `wrapped`) are rejected, because they clash with routes.
 - Rate limit `/api/wrapped`, `/api/card` and `/api/events` per IP, because they trigger upstream calls and image rendering.
 - Never return internal ids from public endpoints.
-- Deleting a profile removes its quests, check-ins, stats and events, and clears its cache entries.
+- Deleting a profile removes its quests, check-ins, stats, events and its auth user, and clears its cache entries.

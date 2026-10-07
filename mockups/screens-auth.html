@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DailyArc auth and profile screens demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EEF2F6; --ink: #1B2559; --pink: #FF5A8A; --sun: #FFC93C; --teal: #2FA39A;
+    --card: #FFFFFF; --paper-2: #DDE4EE; --ink-soft: #5B6794; --rank-c: #3B6CFF; --danger: #E5484D;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Zen Kaku Gothic New", sans-serif; background: #C9D0DC; color: var(--ink); padding: 28px 24px 40px; font-variant-numeric: tabular-nums; }
+  h1.page { font-family: "Dela Gothic One", sans-serif; font-weight: 400; font-size: 22px; text-align: center; }
+  p.sub { text-align: center; font-size: 14px; color: var(--ink-soft); margin: 6px 0 24px; }
+  .row { display: flex; gap: 40px; justify-content: center; align-items: flex-start; margin-bottom: 36px; }
+  .col { width: 390px; }
+  .label { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+  .label span { font-weight: 500; color: var(--ink-soft); }
+  .notes { margin-top: 14px; font-size: 13px; line-height: 1.55; }
+  .notes li { margin-left: 18px; }
+
+  .phone { width: 390px; height: 844px; background: var(--paper); border: 2px solid var(--ink); border-radius: 28px; overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 6px 6px 0 var(--ink); }
+  .screen { position: relative; padding: 24px 20px; flex: 1; overflow: hidden; }
+  .screen.dots::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 360px; background-image: radial-gradient(circle, #C9D3E3 1.6px, transparent 1.8px); background-size: 8px 8px; -webkit-mask-image: linear-gradient(#000, transparent); mask-image: linear-gradient(#000, transparent); pointer-events: none; }
+  .screen > * { position: relative; }
+
+  .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .user { background: var(--sun); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); padding: 6px 14px; font-weight: 700; font-size: 15px; transform: rotate(-2deg); display: inline-block; }
+  .pill { background: #fff; border: 2px solid var(--ink); border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 14px; }
+  .mark { font-family: "Dela Gothic One", sans-serif; font-size: 20px; }
+  .dela { font-family: "Dela Gothic One", sans-serif; font-weight: 400; }
+  .fine { font-size: 13px; font-weight: 500; color: var(--ink-soft); margin-top: 8px; }
+
+  .btn { font-family: inherit; font-weight: 700; font-size: 15px; color: var(--ink); background: #fff; border: 2px solid var(--ink); border-radius: 10px; box-shadow: 3px 3px 0 var(--ink); padding: 10px 14px; min-height: 48px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn.pink { background: var(--pink); }
+  .btn.full { width: 100%; }
+  .btn.sm { min-height: 44px; padding: 8px 14px; }
+
+  .panel { background: var(--card); border: 2px solid var(--ink); border-radius: 6px; box-shadow: 4px 4px 0 var(--ink); padding: 16px; }
+  .rank { background: var(--rank-c); border: 2px solid var(--ink); border-radius: 2px; display: grid; place-items: center; font-family: "Dela Gothic One", sans-serif; color: #fff; line-height: 1; flex: none; }
+
+  .tabs { background: var(--ink); height: 76px; display: flex; justify-content: space-around; align-items: center; padding: 0 8px; flex: none; }
+  .tab { min-width: 72px; height: 52px; border-radius: 10px; color: var(--paper); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 13px; font-weight: 700; border: 2px solid transparent; }
+  .tab svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .tab.active { background: var(--pink); color: var(--ink); border-color: var(--paper); }
+
+  /* wrapped card, 1080 x 1920 scaled */
+  .cardprev { position: relative; border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); overflow: hidden; background: var(--paper); }
+  .wcard { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: top left; background: var(--paper); overflow: hidden; }
+  .wcard::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 1000px; background-image: radial-gradient(circle, #C9D3E3 4.5px, transparent 5px); background-size: 22px 22px; -webkit-mask-image: linear-gradient(#000, transparent); mask-image: linear-gradient(#000, transparent); }
+  .wcard > * { position: absolute; }
+  .w-tape { left: 96px; top: 96px; background: var(--sun); border: 6px solid var(--ink); box-shadow: 9px 9px 0 var(--ink); padding: 14px 40px; font-weight: 700; font-size: 40px; transform: rotate(-2deg); }
+  .w-mark { right: 96px; top: 108px; font-family: "Dela Gothic One", sans-serif; font-size: 40px; }
+  .w-hero { left: 96px; top: 290px; font-family: "Dela Gothic One", sans-serif; font-size: 168px; line-height: 1.02; transform: rotate(-3deg); transform-origin: left top; text-shadow: 8px 8px 0 var(--pink); }
+  .w-line { left: 96px; top: 690px; width: 860px; font-size: 40px; font-weight: 500; line-height: 1.35; }
+  .w-stats { left: 96px; top: 850px; width: 888px; display: flex; gap: 16px; }
+  .w-stat { flex: 1 1 0; min-width: 0; background: #fff; border: 6px solid var(--ink); box-shadow: 10px 10px 0 var(--ink); padding: 26px 12px 22px 18px; }
+  .w-stat b { display: block; font-family: "Dela Gothic One", sans-serif; font-weight: 400; font-size: 64px; line-height: 1.1; letter-spacing: -0.02em; white-space: nowrap; }
+  .w-stat span { display: block; font-size: 28px; font-weight: 700; color: var(--ink-soft); margin-top: 10px; }
+  .w-genres { left: 96px; top: 1160px; width: 888px; }
+  .w-genres h4 { font-size: 34px; font-weight: 700; margin-bottom: 18px; color: var(--ink-soft); }
+  .w-chip { display: inline-block; border: 6px solid var(--ink); border-radius: 999px; padding: 12px 36px; font-size: 40px; font-weight: 700; margin-right: 16px; }
+  .w-bubble { left: 96px; top: 1380px; width: 888px; background: #fff; border: 6px solid var(--ink); border-radius: 36px; padding: 34px 40px 38px; box-shadow: 10px 10px 0 var(--ink); }
+  .w-bubble::after { content: ""; position: absolute; left: 90px; bottom: -34px; width: 50px; height: 50px; background: #fff; border-right: 6px solid var(--ink); border-bottom: 6px solid var(--ink); transform: skewX(-30deg) rotate(45deg) translate(-6px, -6px); }
+  .w-bubble h4 { font-family: "Dela Gothic One", sans-serif; font-weight: 400; font-size: 34px; color: var(--pink); margin-bottom: 10px; }
+  .w-bubble p { font-size: 40px; font-weight: 700; line-height: 1.3; }
+  .w-foot { left: 96px; right: 96px; top: 1660px; display: flex; align-items: center; gap: 28px; }
+  .w-foot .rank { width: 150px; height: 150px; font-size: 100px; border-width: 6px; }
+  .w-foot .who b { display: block; font-family: "Dela Gothic One", sans-serif; font-weight: 400; font-size: 76px; line-height: 1.05; }
+  .w-foot .who span { font-size: 28px; font-weight: 700; color: var(--ink-soft); }
+  .w-url { right: 96px; bottom: 56px; font-size: 28px; font-weight: 700; color: var(--ink-soft); }
+
+  /* landing */
+  .hero { font-family: "Dela Gothic One", sans-serif; font-weight: 400; font-size: 48px; line-height: 1.05; margin-top: 8px; }
+  .hero em { font-style: normal; color: var(--pink); text-shadow: 3px 3px 0 var(--ink); }
+  .sfx { position: absolute !important; color: var(--pink); font-family: "Dela Gothic One", sans-serif; transform: rotate(8deg); }
+  .lead { font-size: 16px; font-weight: 500; line-height: 1.5; margin-top: 12px; }
+  .field-l { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .input { height: 52px; border: 2px solid var(--ink); border-radius: 6px; background: #fff; padding: 0 14px; display: flex; align-items: center; font-size: 16px; font-weight: 500; color: var(--ink-soft); }
+  .input.val { color: var(--ink); font-weight: 700; }
+
+  /* sign in */
+  .divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; font-size: 14px; font-weight: 700; color: var(--ink-soft); }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 2px; background: var(--paper-2); }
+  .glyph { width: 22px; height: 22px; border: 2px solid var(--ink); border-radius: 2px; display: grid; place-items: center; font-family: "Dela Gothic One", sans-serif; font-size: 12px; background: #fff; }
+
+  /* profile */
+  .sect { font-size: 14px; font-weight: 700; color: var(--ink-soft); margin: 12px 0 6px; }
+  .rank.d { background: var(--teal); color: var(--ink); }
+  .list { background: #fff; border: 2px solid var(--ink); border-radius: 6px; box-shadow: 3px 3px 0 var(--ink); }
+  .li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 12px; min-height: 48px; font-size: 15px; font-weight: 700; }
+  .li + .li { border-top: 2px solid var(--paper-2); }
+  .li small { font-size: 14px; font-weight: 500; color: var(--ink-soft); }
+  .tagc { font-size: 13px; font-weight: 700; border-radius: 999px; padding: 2px 10px; border: 2px solid var(--ink); }
+  .tagc.ok { background: var(--teal); color: var(--ink); }
+  .tagc.off { background: var(--paper-2); border-color: var(--paper-2); }
+  .sw { width: 54px; height: 30px; border: 2px solid var(--ink); border-radius: 999px; background: var(--teal); position: relative; flex: none; }
+  .sw i { position: absolute; right: 2px; top: 2px; width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 2px solid var(--ink); }
+  .danger { text-align: center; font-size: 14px; font-weight: 700; color: var(--danger); padding: 12px 0 0; }
+  .twrap { display: flex; gap: 10px; align-items: center; }
+
+  /* cards empty */
+  .ghost { width: 190px; height: 338px; margin: 0 auto; border: 2px dashed var(--ink-soft); border-radius: 6px; display: grid; place-items: center; transform: rotate(-3deg); background: rgba(255,255,255,.6); }
+  .ghost b { font-family: "Dela Gothic One", sans-serif; font-weight: 400; font-size: 64px; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+  <h1 class="page">DailyArc, accounts and profile</h1>
+  <p class="sub">The card works for anyone. Accounts are needed for quests, profile and the public page. Sample data only.</p>
+
+  <div class="row" id="r1">
+
+    <!-- 1 Landing, signed out -->
+    <div class="col">
+      <div class="label">1. Landing <span>(signed out)</span></div>
+      <div class="phone">
+        <div class="screen dots">
+          <div class="head">
+            <div class="mark">DailyArc</div>
+            <div class="pill">Sign in</div>
+          </div>
+          <div class="hero">Find your<br><em>anime</em> type.</div>
+          <div class="sfx" style="right:30px; top:196px; font-size:48px;">ドン</div>
+          <p class="lead" style="max-width:240px;">Enter any public AniList username. Get a card you can share.</p>
+
+          <div style="margin-top:20px;">
+            <div class="field-l">AniList username</div>
+            <div class="input">dev_das</div>
+            <button class="btn pink full" style="margin-top:12px;" type="button">Make my card</button>
+            <div class="fine">No account needed for the card.</div>
+          </div>
+
+          <div class="panel" style="margin-top:22px; padding:12px 14px; box-shadow:3px 3px 0 var(--ink); display:flex; gap:12px; align-items:center;">
+            <div style="flex:1;">
+              <div class="dela" style="font-size:19px; line-height:1.2;">Then level up for real</div>
+              <div style="font-size:14px; font-weight:500; margin-top:3px;">Quests, XP and a rank on your card.</div>
+            </div>
+            <button class="btn sm" type="button">Sign up</button>
+          </div>
+
+          <div style="position:absolute; left:50%; top:586px; transform:translateX(-50%) rotate(4deg);">
+            <div class="cardprev" data-card data-scale="0.3" style="width:324px; height:576px;"></div>
+          </div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>The card path is untouched: type a name, get a card. No sign-in in the way.</li>
+        <li>Sign in sits top right, and "Sign up" is offered as the second step, not the first.</li>
+      </ul>
+    </div>
+
+    <!-- 2 Wrapped result, signed out -->
+    <div class="col">
+      <div class="label">2. Wrapped result <span>(visitor, not signed in)</span></div>
+      <div class="phone">
+        <div class="screen dots">
+          <div class="head">
+            <div class="mark">DailyArc</div>
+            <div class="pill">Sign in</div>
+          </div>
+          <div style="display:flex; justify-content:center;">
+            <div class="cardprev" data-card data-scale="0.26" style="width:281px; height:499px;" data-norank="1"></div>
+          </div>
+          <div style="margin-top:22px; display:flex; flex-direction:column; gap:12px;">
+            <button class="btn pink full" type="button">Save for story</button>
+            <div style="display:flex; gap:12px;">
+              <button class="btn" style="flex:1;" type="button">Save square</button>
+              <button class="btn" style="flex:1;" type="button">Copy link</button>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:16px; padding:12px 14px; box-shadow:3px 3px 0 var(--ink); display:flex; gap:12px; align-items:center;">
+            <div style="flex:1;">
+              <div class="dela" style="font-size:19px; line-height:1.2;">Add your rank to this card</div>
+              <div style="font-size:14px; font-weight:500; margin-top:3px;">Sign up and start quests.</div>
+            </div>
+            <button class="btn sm pink" type="button">Sign up</button>
+          </div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>A visitor can save and share without an account. The sign-up prompt comes after the card.</li>
+        <li>Without an account the card has no rank line. It appears once the AniList account is linked.</li>
+      </ul>
+    </div>
+
+    <!-- 3 Sign in -->
+    <div class="col">
+      <div class="label">3. Sign in or sign up <span>(/login)</span></div>
+      <div class="phone">
+        <div class="screen dots">
+          <div class="head">
+            <div class="mark">DailyArc</div>
+            <div class="pill">Back</div>
+          </div>
+          <div class="dela" style="font-size:32px; line-height:1.1;">Sign in or sign up</div>
+          <p class="lead" style="font-size:15px;">One account for quests, your rank and your public page.</p>
+
+          <div style="margin-top:20px; display:flex; flex-direction:column; gap:12px;">
+            <button class="btn pink full" type="button"><span class="glyph">A</span>Continue with AniList</button>
+            <button class="btn full" type="button"><span class="glyph">G</span>Continue with Google</button>
+          </div>
+          <div class="fine" style="margin-top:10px;">AniList also links your card to your account.</div>
+
+          <div class="divider">or</div>
+
+          <div class="field-l">Email</div>
+          <div class="input">you@example.com</div>
+          <button class="btn full" style="margin-top:12px;" type="button">Email me a sign-in link</button>
+          <div class="fine">No password. We send you a link.</div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>One screen for both. A new email or provider creates the account.</li>
+        <li>AniList is first because it links the card on the way in.</li>
+        <li>Provider names are text only. No logos used.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="row" id="r2">
+
+    <!-- 4 Profile, AniList linked -->
+    <div class="col">
+      <div class="label">4. Profile <span>(AniList linked)</span></div>
+      <div class="phone">
+        <div class="screen dots" style="padding-top:20px;">
+          <div class="dela" style="font-size:32px; margin-bottom:12px;">Profile</div>
+          <div class="panel" style="padding:12px 14px; display:flex; gap:14px; align-items:center;">
+            <div class="rank" style="width:60px; height:60px; font-size:38px;">C</div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:18px; font-weight:700;">dev_das</div>
+              <div style="font-size:14px; font-weight:500; color:var(--ink-soft);">Level 27, Binge Demon</div>
+              <div style="font-size:13px; font-weight:700; margin-top:2px;">Best streak: 31 days</div>
+            </div>
+          </div>
+
+          <div class="sect">AniList</div>
+          <div class="list">
+            <div class="li"><div class="twrap">dev_das <span class="tagc ok">Linked</span></div><button class="btn sm" type="button">Refresh</button></div>
+          </div>
+          <div class="fine" style="margin-top:6px;">Card data updated 2 hours ago.</div>
+
+          <div class="sect">Public page</div>
+          <div class="list">
+            <div class="li"><span>Public profile</span><div class="sw"><i></i></div></div>
+            <div class="li"><small>domain.tld/u/dev_das</small><button class="btn sm" type="button">Copy</button></div>
+          </div>
+
+          <div class="sect">Settings</div>
+          <div class="list">
+            <div class="li"><span>Timezone</span><small>Asia/Karachi (auto)</small></div>
+            <div class="li"><span>Email</span><small>dev@example.com</small></div>
+          </div>
+
+          <button class="btn full" style="margin-top:16px;" type="button">Sign out</button>
+          <div class="danger">Delete account and data</div>
+        </div>
+        <div class="tabs" data-tabs="Profile"></div>
+      </div>
+      <ul class="notes">
+        <li>Header repeats the identity: rank, level, watcher type, best streak.</li>
+        <li>Public profile switch controls /u/dev_das. The link is only useful while it is on.</li>
+        <li>Delete is plain red text, away from the primary buttons.</li>
+      </ul>
+    </div>
+
+    <!-- 5 Profile, not linked -->
+    <div class="col">
+      <div class="label">5. Profile <span>(Google or email user, no AniList)</span></div>
+      <div class="phone">
+        <div class="screen dots" style="padding-top:20px;">
+          <div class="dela" style="font-size:32px; margin-bottom:12px;">Profile</div>
+          <div class="panel" style="padding:12px 14px; display:flex; gap:14px; align-items:center;">
+            <div class="rank d" style="width:60px; height:60px; font-size:38px;">D</div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:18px; font-weight:700;">mira_k</div>
+              <div style="font-size:14px; font-weight:500; color:var(--ink-soft);">Level 12, no watcher type yet</div>
+              <div style="font-size:13px; font-weight:700; margin-top:2px;">Best streak: 9 days</div>
+            </div>
+          </div>
+
+          <div class="sect">AniList</div>
+          <div class="list">
+            <div class="li"><div class="twrap">Not linked <span class="tagc off">Off</span></div></div>
+          </div>
+          <button class="btn pink full" style="margin-top:10px;" type="button">Link AniList</button>
+          <div class="fine" style="margin-top:6px;">Link it to get your card and watcher type.</div>
+
+          <div class="sect">Public page</div>
+          <div class="list">
+            <div class="li"><span>Public profile</span><div class="sw"><i></i></div></div>
+            <div class="li"><small>domain.tld/u/mira_k</small><button class="btn sm" type="button">Copy</button></div>
+          </div>
+
+          <div class="sect">Settings</div>
+          <div class="list">
+            <div class="li"><span>Timezone</span><small>Europe/London (auto)</small></div>
+            <div class="li"><span>Email</span><small>mira@example.com</small></div>
+          </div>
+
+          <button class="btn full" style="margin-top:16px;" type="button">Sign out</button>
+          <div class="danger">Delete account and data</div>
+        </div>
+        <div class="tabs" data-tabs="Profile"></div>
+      </div>
+      <ul class="notes">
+        <li>Everything works except the card. The pink button is the one clear next step.</li>
+        <li>The public page still exists. It shows rank and level only.</li>
+      </ul>
+    </div>
+
+    <!-- 6 Cards tab, not linked -->
+    <div class="col">
+      <div class="label">6. Cards tab <span>(not linked yet)</span></div>
+      <div class="phone">
+        <div class="screen dots" style="padding-top:20px;">
+          <div class="dela" style="font-size:32px; margin-bottom:26px;">Cards</div>
+          <div class="ghost"><b>?</b></div>
+          <div class="dela" style="font-size:22px; text-align:center; margin-top:30px;">No card yet</div>
+          <p style="text-align:center; font-size:15px; font-weight:500; line-height:1.5; margin:8px auto 0; max-width:270px;">Link your AniList account to build your card.</p>
+          <button class="btn pink full" style="margin-top:22px;" type="button">Link AniList</button>
+          <div class="fine" style="text-align:center;">Your quests and rank keep working without it.</div>
+        </div>
+        <div class="tabs" data-tabs="Cards"></div>
+      </div>
+      <ul class="notes">
+        <li>Linked users see screen 2 here with a refresh button instead.</li>
+        <li>The dashed ghost card shows what they are missing, without using any fake data.</li>
+      </ul>
+    </div>
+  </div>
+
+<script>
+  var ICONS = {
+    Quests: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M8 12.5l3 3 5-6"/></svg>',
+    Stats: '<svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>',
+    Cards: '<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h6M9 12h6"/></svg>',
+    Profile: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4-6 8-6s7 1.5 8 6"/></svg>'
+  };
+  document.querySelectorAll('[data-tabs]').forEach(function (el) {
+    var active = el.getAttribute('data-tabs');
+    el.innerHTML = ['Quests', 'Stats', 'Cards', 'Profile'].map(function (t) {
+      return '<div class="tab' + (t === active ? ' active' : '') + '">' + ICONS[t] + t + '</div>';
+    }).join('');
+  });
+
+  function card(noRank) {
+    var foot = noRank
+      ? '<div class="w-foot"><div class="who"><span style="font-size:34px;">Anime Wrapped for dev_das</span></div></div>'
+      : '<div class="w-foot"><div class="rank">C</div><div class="who"><b>Level 27</b><span>C-rank Binge Demon</span></div></div>';
+    return '<div class="wcard">' +
+      '<div class="w-tape">dev_das</div>' +
+      '<div class="w-mark">DailyArc</div>' +
+      '<div class="w-hero">Binge<br>Demon</div>' +
+      '<div class="w-line">You finish whole seasons before the weekend is over.</div>' +
+      '<div class="w-stats">' +
+        '<div class="w-stat"><b>1,264</b><span>Hours</span></div>' +
+        '<div class="w-stat"><b>3,160</b><span>Episodes</span></div>' +
+        '<div class="w-stat"><b>78%</b><span>Completed</span></div>' +
+      '</div>' +
+      '<div class="w-genres"><h4>Top genres</h4>' +
+        '<span class="w-chip" style="background:var(--sun)">Action</span>' +
+        '<span class="w-chip" style="background:var(--teal)">Drama</span>' +
+        '<span class="w-chip" style="background:var(--pink)">Fantasy</span>' +
+      '</div>' +
+      '<div class="w-bubble"><h4>Hot take</h4><p>You gave Sample Title A a 9. Everyone else gave it 6.2.</p></div>' +
+      foot +
+      '<div class="w-url">domain.tld</div>' +
+    '</div>';
+  }
+  document.querySelectorAll('[data-card]').forEach(function (el) {
+    el.innerHTML = card(el.getAttribute('data-norank') === '1');
+    el.firstChild.style.transform = 'scale(' + el.getAttribute('data-scale') + ')';
+  });
+
+  var h = location.hash.replace('#', '');
+  if (h === 'r1' || h === 'r2') {
+    ['r1', 'r2'].forEach(function (id) { if (id !== h) document.getElementById(id).style.display = 'none'; });
+  }
+</script>
+</body>
+</html>

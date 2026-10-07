@@ -18,7 +18,7 @@ Dev Das, CS student, frontend focused. Prefer clear, boring, well-typed code ove
 ## Proposed stack (change here if it changes)
 - Next.js (App Router), TypeScript, Tailwind CSS
 - Supabase (auth, Postgres) added only when quests ship
-- AniList GraphQL API for anime data (the card needs no login, only a public username; quests use AniList OAuth sign in, see ARCHITECTURE.md)
+- AniList GraphQL API for anime data. The card needs no login, only a public username. Quests, profile and the public page need an account: sign in with AniList, Google or email (see Auth in ARCHITECTURE.md)
 - Card image export: server-side render with Satori or @vercel/og
 - Hosting: Vercel
 
