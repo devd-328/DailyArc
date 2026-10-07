@@ -51,6 +51,86 @@
   --shadow-panel: 4px 4px 0 var(--ink);
   --shadow-row: 3px 3px 0 var(--ink);
   --shadow-pressed: 1px 1px 0 var(--ink);
+
+  /* On-screen Wrapped card preview. 0.3 matches the 390-wide landing mockup. */
+  --card-preview-scale: 0.3;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --card-preview-scale: 0.34;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --card-preview-scale: 0.4;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --card-preview-scale: 0.45;
+  }
+}
+
+/* Page padding that grows with the viewport and respects device safe areas. */
+.page-gutter {
+  padding-top: max(1.5rem, calc(env(safe-area-inset-top) + 0.5rem));
+  padding-right: max(1.25rem, env(safe-area-inset-right));
+  padding-bottom: max(2rem, env(safe-area-inset-bottom));
+  padding-left: max(1.25rem, env(safe-area-inset-left));
+}
+@media (min-width: 640px) {
+  .page-gutter {
+    padding-right: max(1.5rem, env(safe-area-inset-right));
+    padding-left: max(1.5rem, env(safe-area-inset-left));
+  }
+}
+@media (min-width: 768px) {
+  .page-gutter {
+    padding-right: max(2rem, env(safe-area-inset-right));
+    padding-left: max(2rem, env(safe-area-inset-left));
+  }
+}
+@media (min-width: 1024px) {
+  .page-gutter {
+    padding-top: max(2.5rem, calc(env(safe-area-inset-top) + 0.75rem));
+    padding-right: max(2.5rem, env(safe-area-inset-right));
+    padding-left: max(2.5rem, env(safe-area-inset-left));
+  }
+}
+
+/* Phone: sample card peeks from the bottom of the page, not from the form. */
+.landing-card-peek {
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+}
+@media (max-width: 767px) {
+  .landing-card-peek {
+    position: absolute;
+    left: 50%;
+    bottom: -318px;
+    transform: translateX(-50%);
+  }
+}
+@media (max-width: 767px) and (max-height: 780px) {
+  .landing-card-peek {
+    bottom: -500px;
+  }
+}
+@media (min-width: 768px) {
+  .landing-card-peek {
+    position: relative;
+    margin-top: 1rem;
+  }
+}
+@media (min-width: 1024px) {
+  .landing-card-peek {
+    margin-top: 0.5rem;
+    justify-self: center;
+  }
 }
 
 /* Halftone dots behind hero areas only, fading out downward. */
@@ -61,10 +141,50 @@
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: 330px;
+  height: min(330px, 42vh);
   background-image: radial-gradient(circle, var(--halftone) 1.6px, transparent 1.8px);
   background-size: 8px 8px;
   -webkit-mask-image: linear-gradient(#000, transparent);
   mask-image: linear-gradient(#000, transparent);
   pointer-events: none;
+}
+@media (min-width: 768px) {
+  .halftone::before {
+    height: min(480px, 50vh);
+  }
+}
+@media (min-width: 1024px) {
+  .halftone::before {
+    height: min(640px, 70vh);
+  }
+}
+
+/* Halftone on the 1080 Wrapped card. Dot size from DESIGN_SYSTEM.md. */
+.card-halftone {
+  position: relative;
+}
+.card-halftone::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1000px;
+  background-image: radial-gradient(circle, var(--halftone) 4.5px, transparent 5px);
+  background-size: 22px 22px;
+  -webkit-mask-image: linear-gradient(#000, transparent);
+  mask-image: linear-gradient(#000, transparent);
+  pointer-events: none;
+}
+
+/* Speech-bubble tail on the Wrapped card hot take. */
+.hot-take-bubble::after {
+  content: "";
+  position: absolute;
+  left: 90px;
+  bottom: -34px;
+  width: 50px;
+  height: 50px;
+  background: var(--card);
+  border-right: 6px solid var(--ink);
+  border-bottom: 6px solid var(--ink);
+  transform: skewX(-30deg) rotate(45deg) translate(-6px, -6px);
 }

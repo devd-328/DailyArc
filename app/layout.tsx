@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Dela_Gothic_One, Zen_Kaku_Gothic_New } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -30,6 +30,14 @@ const sfx = localFont({
 export const metadata: Metadata = {
   title: "DailyArc",
   description: "Level up your real life like an anime protagonist, then share your anime identity card.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#eef2f6",
+  colorScheme: "light",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

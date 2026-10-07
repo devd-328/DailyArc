@@ -26,6 +26,7 @@
 
   --radius-card: var(--radius-card);
   --radius-input: var(--radius-input);
+  --radius-chip: var(--radius-chip);
   --radius-badge: var(--radius-badge);
   --radius-btn: var(--radius-btn);
 
@@ -36,6 +37,7 @@
 
 html {
   background: var(--paper);
+  overflow-x: clip;
 }
 
 body {
@@ -43,6 +45,7 @@ body {
   color: var(--ink);
   font-family: var(--font-zen), sans-serif;
   font-variant-numeric: tabular-nums;
+  overflow-x: clip;
 }
 
 :focus-visible {

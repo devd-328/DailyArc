@@ -163,6 +163,7 @@ Bottom tab bar: as in Components, Quests active.
 
 ### Other screens, key points
 - Landing: wordmark (Dela Gothic One 20) and a "Sign in" pill in the header. Hero in Dela Gothic One 48px, 1.05 line height, with one word in --pink and a 3px 3px 0 ink text shadow ("Find your anime type."). One-line lead (16px 500). Username input and a pink "Make my card" button, then "No account needed for the card." Then a panel "Then level up for real" with a small "Sign up" button. A sample card tilted 4 degrees pokes up from the bottom edge.
+- Landing is designed mobile first (the 390-wide mockup). Below about 380px the hero can drop to 40px so "Find your anime type." still fits. From 768px the same stacked layout sits in a wider column and more of the sample card is visible below the form. From 1024px the form sits on the left and the sample card sits on the right. Tokens, type, and components stay the same. Padding uses the device safe area.
 - Wrapped result: card preview, then "Save for story" (pink), "Save square" and "Copy link" (white, side by side). A visitor also sees a panel "Add your rank to this card" with a pink "Sign up" button.
 - Sign in or sign up: title in Dela Gothic One 32. Pink "Continue with AniList", white "Continue with Google", a divider with "or", an email input and "Email me a sign-in link", then "No password. We send you a link."
 - New quest: sheet over the dimmed quests screen. Fields in order: name, Trains (five stat chips), XP (10, 20, 30), Repeats (Daily, Weekly), pink "Save quest", and "x of 8 quests used after saving".
