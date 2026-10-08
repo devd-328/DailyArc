@@ -148,7 +148,7 @@ The client never sends an XP value. XP comes only from the quest record.
 ## Proof flow
 `POST /api/verify-proof` is verify-and-discard. The photo is never written to disk, Supabase Storage, or logs.
 
-1. The quest checkbox opens a sheet. The browser resizes the photo to 800px wide and re-encodes it as a JPEG at quality 0.6 (`lib/proof-image.ts`). That canvas step drops EXIF, including GPS.
+1. The quest checkbox opens a sheet and starts the device camera (`getUserMedia`, rear camera when the phone has one). There is no gallery picker. Snap grabs one frame, then the camera turns off. The browser resizes that frame to 800px wide and re-encodes it as a JPEG at quality 0.6 (`lib/proof-image.ts`). That canvas step drops EXIF, including GPS. If the camera is blocked or missing, the sheet stops. A saved photo is not accepted.
 2. The sheet posts the JPEG to this route. The route holds it in memory, sends it to the vision model, and drops it when the response ends.
 3. A pass, fail, or missing photo is stored in `quest_completions` (verdict, quest id, time, base XP, short reason). A blurry or unreadable photo returns `unclear` and is not stored, so the user can retake it.
 4. On a pass, the sheet calls `POST /api/checkins`. Profile XP, stats, and the streak still change only inside `check_in()`.

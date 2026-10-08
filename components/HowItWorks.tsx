@@ -7,7 +7,7 @@ const STEPS = [
   {
     n: "2",
     title: "Check in when you do it",
-    body: "Tap the box and take a photo. It is checked and deleted. You get XP.",
+    body: "Tap the box and snap a live photo. It is checked and deleted. You get XP.",
   },
   {
     n: "3",
