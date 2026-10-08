@@ -19,6 +19,8 @@ export type ProfileRow = {
   is_public: boolean;
   anilist_username: string | null;
   anilist_user_id: number | string | null;
+  avatar_url?: string | null;
+  avatar_type?: string | null;
 };
 
 export type QuestRow = {

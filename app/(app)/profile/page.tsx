@@ -1,10 +1,13 @@
+import { AvatarEditor } from "@/components/AvatarEditor";
 import { CopyButton } from "@/components/CopyButton";
 import { PublicSwitch } from "@/components/PublicSwitch";
 import { RankBadge } from "@/components/RankBadge";
 import { RefreshCardButton } from "@/components/RefreshCardButton";
 import { authErrorMessage, displayAccountEmail, refreshedAgoLabel } from "@/lib/anilist-oauth";
+import { resolveAvatar } from "@/lib/avatar";
 import { progressFromProfile, requireProfile } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/server";
+import { getSupabasePublicEnv } from "@/lib/supabase/public-env";
 import { requireUser } from "@/lib/supabase/session";
 import { watcherTypeLabel } from "@/lib/watcherType";
 import { connection } from "next/server";
@@ -23,6 +26,7 @@ async function ProfileBody({ searchParams }: { searchParams: PageProps<"/profile
   const profile = await requireProfile(user.id);
   const progress = progressFromProfile(profile);
   const typeLabel = watcherTypeLabel(profile.watcher_type);
+  const avatar = resolveAvatar(profile.avatar_type, profile.avatar_url);
   const params = await searchParams;
   const linkError = authErrorMessage(typeof params.error === "string" ? params.error : null);
 
@@ -45,6 +49,12 @@ async function ProfileBody({ searchParams }: { searchParams: PageProps<"/profile
         </p>
       ) : null}
       <section className="flex items-center gap-3.5 rounded-card border-2 border-ink bg-card px-3.5 py-3 shadow-panel">
+        <AvatarEditor
+          userId={profile.id}
+          avatarType={avatar.type}
+          avatarUrl={avatar.url}
+          supabaseUrl={getSupabasePublicEnv().url}
+        />
         <RankBadge rank={progress.rank} size={60} />
         <div className="min-w-0 flex-1">
           <div className="text-lg font-bold">{profile.username}</div>

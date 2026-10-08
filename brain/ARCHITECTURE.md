@@ -72,13 +72,14 @@ First sign in goes through `/onboarding`: pick a username (default: the AniList 
 ## Database (Supabase, added with quests)
 
 ### profiles
-id (uuid, = auth user id), username (unique), anilist_user_id (nullable, unique), anilist_username (nullable, unique), timezone (default 'UTC'), total_xp (default 0), current_streak, longest_streak, last_checkin_date, watcher_type (nullable), is_public (default true), created_at
+id (uuid, = auth user id), username (unique), anilist_user_id (nullable, unique), anilist_username (nullable, unique), timezone (default 'UTC'), total_xp (default 0), current_streak, longest_streak, last_checkin_date, watcher_type (nullable), is_public (default true), avatar_type (`preset` or `gallery`), avatar_url, created_at
 
 - Level is not stored. It is derived from `total_xp`, so the two cannot drift apart.
 - `username` is the public name used in `/u/[username]`. It is chosen by the user and does not have to match the AniList name.
 - `anilist_username` and `anilist_user_id` are only set by the AniList link flow, never from client input. This stops someone from claiming another user's AniList name and showing a rank on it. On profile insert, `protect_profile_progress` copies those fields from `auth.users.app_metadata` if the OAuth callback already stored them, then clients still cannot change them.
 - `watcher_type` is filled when the AniList account is linked and the Wrapped data has been computed. It stays null for users without AniList.
 - `current_streak` is the daily streak: a day counts when at least one daily quest was checked in. Weekly quests do not count toward it.
+- On insert, `protect_profile_progress` assigns a random preset face from `/avatars/avatar-01.svg` through `avatar-12.svg`. The client cannot send a different URL on create. A later update may switch to another preset path, or to `gallery` with the single object `{user_id}/avatar.jpg` in the public `avatars` bucket. Any other URL is rejected. The public profile page does not show the avatar.
 
 ### quests
 id, user_id, name, stat (enum: strength, intelligence, discipline, charisma, vitality), xp_value (check in 10, 20, 30), cadence (enum: daily, weekly), weekly_streak (default 0), active, template_id (nullable, set when added from a starter quest), created_at

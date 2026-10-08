@@ -69,6 +69,15 @@ export const quests = {
   sideQuestRerollsPerDay: 1,
 } as const;
 
+/** Choosable preset faces, plus one optional gallery photo per user. */
+export const avatars = {
+  count: 12,
+  /** Reject a gallery file above this before cropping. */
+  maxUploadBytes: 5_000_000,
+  size: 256,
+  jpegQuality: 0.8,
+} as const;
+
 /** Verify-and-discard proof photos. The image is not stored. */
 export const proof = {
   /** Longest edge of the JPEG sent to the API, in pixels. */
