@@ -69,6 +69,17 @@ export const quests = {
   sideQuestRerollsPerDay: 1,
 } as const;
 
+/** Verify-and-discard proof photos. The image is not stored. */
+export const proof = {
+  /** Longest edge of the JPEG sent to the API, in pixels. */
+  maxWidth: 800,
+  jpegQuality: 0.6,
+  /** Reject uploads above this. A compressed photo should be far smaller. */
+  maxBytes: 1_000_000,
+  /** Proof attempts stored per user per UTC day. Blurry retakes are not stored. */
+  dailyCap: 10,
+} as const;
+
 export const watcher = {
   /** Share of the list in one genre (0 to 1). */
   genreLoyalistMinShare: 0.4,

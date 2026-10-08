@@ -1,6 +1,5 @@
 "use client";
 
-import { crossedRankBoundary, parseCheckInResult } from "@/lib/checkin";
 import { roastLine, type RoastInput } from "@/lib/coach";
 import { applyStreakBonus } from "@/lib/streaks";
 import { quests as questConfig, STAT_LABELS, streaks, type Rank } from "@/lib/config";
@@ -11,6 +10,7 @@ import { useState } from "react";
 import { CoachLine } from "./CoachLine";
 import { HowItWorks } from "./HowItWorks";
 import { NewQuestSheet } from "./NewQuestSheet";
+import { ProofSheet } from "./ProofSheet";
 
 type BoardQuest = QuestRow & { done: boolean };
 
@@ -29,7 +29,7 @@ export function QuestBoard({
 }) {
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [proofQuest, setProofQuest] = useState<BoardQuest | null>(null);
   const [pendingTemplate, setPendingTemplate] = useState<string | null>(null);
   const [justAdded, setJustAdded] = useState<string[]>([]);
   const doneCount = quests.filter((quest) => quest.done).length;
@@ -39,24 +39,6 @@ export function QuestBoard({
   const openStarters = starters.filter((item) => !starterAdded(item.name, questNames));
   const empty = quests.length === 0;
   const roastResult = roastLine({ ...roast, quests });
-
-  async function checkIn(questId: string) {
-    if (pendingId) return;
-    setPendingId(questId);
-    const response = await fetch("/api/checkins", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quest_id: questId }),
-    });
-    setPendingId(null);
-    if (!response.ok) return;
-    const result = parseCheckInResult(await response.json());
-    if (result && !result.duplicate && crossedRankBoundary(rank, result.rank)) {
-      router.push(`/rank-up?xp=${result.xpAwarded}`);
-      return;
-    }
-    router.refresh();
-  }
 
   async function addStarter(templateId: string, name: string) {
     if (pendingTemplate || atLimit) return;
@@ -107,9 +89,9 @@ export function QuestBoard({
                 <div className="flex min-h-[66px] items-center gap-3 rounded-card border-2 border-ink bg-card px-3 py-2.5 shadow-row">
                   <button
                     type="button"
-                    disabled={quest.done || pendingId != null}
-                    onClick={() => void checkIn(quest.id)}
-                    aria-label={quest.done ? `${quest.name} done` : `Check in ${quest.name}`}
+                    disabled={quest.done || proofQuest != null}
+                    onClick={() => setProofQuest(quest)}
+                    aria-label={quest.done ? `${quest.name} done` : `Show proof for ${quest.name}`}
                     className={`grid size-7 shrink-0 place-items-center border-2 border-ink ${
                       quest.done ? "bg-teal" : "bg-card"
                     }`}
@@ -196,6 +178,14 @@ export function QuestBoard({
 
       {sheetOpen ? (
         <NewQuestSheet used={quests.length} onClose={() => setSheetOpen(false)} onSaved={() => router.refresh()} />
+      ) : null}
+      {proofQuest ? (
+        <ProofSheet
+          questId={proofQuest.id}
+          questName={proofQuest.name}
+          rank={rank}
+          onClose={() => setProofQuest(null)}
+        />
       ) : null}
     </>
   );

@@ -87,6 +87,12 @@ id, user_id, name, stat (enum: strength, intelligence, discipline, charisma, vit
 id, quest_id, user_id, period_start (date), base_xp, xp_awarded, created_at
 Unique on (quest_id, period_start).
 
+### quest_completions
+id, user_id, quest_id, status (enum: no_proof, verified, rejected), xp_awarded (0, 10, 20 or 30), reason (nullable, max 200 characters), created_at
+- Written by `POST /api/verify-proof` with the service role. The photo is not stored.
+- `xp_awarded` is copied from `quests.xp_value` on a pass, otherwise 0. This row does not change `profiles.total_xp`, stats or streaks. Those still change only through `check_in()`.
+- Signed-in users can read their own rows. They cannot insert or update.
+
 - For daily quests `period_start` is the user's local date (after the grace window). For weekly quests it is the Monday of that week.
 - `base_xp` is the XP before the streak bonus (used for the daily cap). `xp_awarded` is what the user received.
 
@@ -121,9 +127,9 @@ Used for the success metrics. Insert only, through the server.
 - `check_in(quest_id)` Postgres function (security definer). See Check-in flow.
 
 ### Row level security
-- Users can read their own rows in profiles, quests, checkins and stats.
+- Users can read their own rows in profiles, quests, checkins, stats and quest_completions.
 - Users can insert and update their own quests (name, stat, xp_value, cadence, active). They cannot touch XP, streak, level or watcher type columns.
-- Clients have no insert or update access to `checkins`, `stats` or any XP or streak column. These change only through `check_in()`.
+- Clients have no insert or update access to `checkins`, `quest_completions`, `stats` or any XP or streak column. Check-ins change only through `check_in()`. Proof rows are inserted by the service role.
 - Users can read `quest_templates` and their own `side_quests`. They cannot write to either. Side quests change only through server functions.
 - `public_profiles` is the only thing readable without auth.
 
@@ -138,6 +144,17 @@ Used for the success metrics. Insert only, through the server.
 7. Return the new level, rank, streak and XP awarded. If the new rank differs from the rank before this check-in, the client opens `/rank-up`.
 
 The client never sends an XP value. XP comes only from the quest record.
+
+## Proof flow
+`POST /api/verify-proof` is verify-and-discard. The photo is never written to disk, Supabase Storage, or logs.
+
+1. The quest checkbox opens a sheet. The browser resizes the photo to 800px wide and re-encodes it as a JPEG at quality 0.6 (`lib/proof-image.ts`). That canvas step drops EXIF, including GPS.
+2. The sheet posts the JPEG to this route. The route holds it in memory, sends it to the vision model, and drops it when the response ends.
+3. A pass, fail, or missing photo is stored in `quest_completions` (verdict, quest id, time, base XP, short reason). A blurry or unreadable photo returns `unclear` and is not stored, so the user can retake it.
+4. On a pass, the sheet calls `POST /api/checkins`. Profile XP, stats, and the streak still change only inside `check_in()`.
+5. The sheet shows the model's line immediately: a hype line on a pass, a roast on a fail, or a request to retake when the photo is unclear. The privacy line on the sheet is: "Your proof is checked and deleted instantly. We never save your photos."
+
+The daily cap is `proof.dailyCap` stored rows per user per UTC day. The model is `PROOF_MODEL`, defaulting to Groq `qwen/qwen3.8-27b`. Groq's terms say inputs are not used for training unless the customer allows it. Turn on Zero Data Retention in the Groq console. The model is a preview and can be removed. Inputs must not be logged.
 
 Creating a quest is limited to 8 active quests, enforced in the database with a trigger or check function, not only in the UI.
 
@@ -179,6 +196,7 @@ GET    /cards                     own card, or the link AniList empty state (aut
 GET    /profile                   own account, AniList link, public page switch, settings (auth)
 POST   /api/quests                create or update a quest (auth)
 POST   /api/checkins              check in (auth)
+POST   /api/verify-proof          judge a proof photo, store the verdict only (auth)
 GET    /api/quest-templates       starter templates (auth)
 POST   /api/quests/from-template  add a starter quest (auth)
 GET    /api/side-quest            today's side quest (auth, v1.1)
