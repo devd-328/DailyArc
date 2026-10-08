@@ -77,6 +77,44 @@ export function localCheckinDate(now: Date, timeZone: string): string {
  * Period key for a check-in. Daily is the local date itself.
  * Weekly is the Monday of that week (ISO week, Monday start).
  */
+/** Minutes until the 3:00 AM local grace reset. */
+export function minutesUntilDayReset(now: Date, timeZone: string): number {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+  const bag: Partial<Record<string, string>> = {};
+  for (const part of fmt.formatToParts(now)) {
+    if (part.type !== "literal") bag[part.type] = part.value;
+  }
+  const hour = Number(bag.hour);
+  const minute = Number(bag.minute);
+  if (![hour, minute].every(Number.isFinite)) {
+    throw new RangeError(`Could not read local time in timezone "${timeZone}"`);
+  }
+  const minutesNow = hour * 60 + minute;
+  const resetAt = streaks.graceHour * 60;
+  let delta = resetAt - minutesNow;
+  if (delta <= 0) delta += 24 * 60;
+  return delta;
+}
+
+export function formatTimeLeft(minutes: number): string {
+  if (minutes >= 120) return `${Math.round(minutes / 60)} hours`;
+  if (minutes >= 60) return "1 hour";
+  return `${Math.max(1, Math.round(minutes))} minutes`;
+}
+
+export function daysInactiveSince(lastCheckinDate: string | null, localDay: string): number {
+  if (!lastCheckinDate) return 0;
+  const from = Date.parse(`${lastCheckinDate}T00:00:00Z`);
+  const to = Date.parse(`${localDay}T00:00:00Z`);
+  if (!Number.isFinite(from) || !Number.isFinite(to)) return 0;
+  return Math.max(0, Math.round((to - from) / 86400000));
+}
+
 export function periodStart(isoDate: string, cadence: Cadence): string {
   if (cadence === "daily") return isoDate;
   const utc = utcFromIso(isoDate);

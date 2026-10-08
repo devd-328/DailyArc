@@ -1,9 +1,13 @@
+import { CoachLine } from "@/components/CoachLine";
 import { RankBadge } from "@/components/RankBadge";
 import { RankUpActions } from "@/components/RankUpActions";
 import { XpBar } from "@/components/XpBar";
 import { parseRankUpXp, rankUpCopy } from "@/lib/checkin";
+import { roastLine } from "@/lib/coach";
 import { progressFromProfile, requireProfile } from "@/lib/profile";
+import { daysInactiveSince, formatTimeLeft, localCheckinDate, minutesUntilDayReset } from "@/lib/streaks";
 import { requireUser } from "@/lib/supabase/session";
+import { connection } from "next/server";
 import { Suspense } from "react";
 
 export const instant = false;
@@ -27,6 +31,25 @@ async function RankUpBody({ searchParams }: Pick<PageProps<"/rank-up">, "searchP
   const xpAwarded = parseRankUpXp(params.xp);
   const progress = progressFromProfile(profile);
   const nextLevel = progress.toNext === 0 ? null : progress.level + 1;
+  await connection();
+  const now = new Date();
+  const localDay = localCheckinDate(now, profile.timezone);
+  const minutesLeft = minutesUntilDayReset(now, profile.timezone);
+  const roast = roastLine(
+    {
+      name: profile.username,
+      quests: [{ name: "Quest", done: true }],
+      streakDays: profile.current_streak,
+      bestStreak: profile.longest_streak,
+      level: progress.level,
+      xpToNext: Math.max(0, progress.toNext - progress.intoLevel),
+      daysInactive: daysInactiveSince(profile.last_checkin_date, localDay),
+      timeLeft: formatTimeLeft(minutesLeft),
+      minutesLeft,
+      day: localDay,
+    },
+    "level_up_roast",
+  );
 
   return (
     <div className="relative flex w-full flex-col items-center">
@@ -49,6 +72,9 @@ async function RankUpBody({ searchParams }: Pick<PageProps<"/rank-up">, "searchP
           {rankUpCopy(progress.rank, xpAwarded)}
         </p>
       ) : null}
+      <div className="mt-4 w-full">
+        <CoachLine line={roast.line} tone="win" label="Rank roast" />
+      </div>
       <div className="mt-[30px] w-full">
         <XpBar intoLevel={progress.intoLevel} toNext={progress.toNext} />
         {nextLevel ? (

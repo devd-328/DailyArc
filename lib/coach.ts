@@ -1,37 +1,105 @@
-export type CoachTone = "empty" | "roast" | "nudge" | "win";
+import { ROAST_COPY, type RoastTrigger } from "./roast-copy";
 
-export type CoachInput = {
-  questCount: number;
-  doneCount: number;
+export type { RoastTrigger };
+
+export type CoachTone = "roast" | "win";
+
+export type RoastInput = {
+  name: string;
+  quests: readonly { name: string; done: boolean }[];
   streakDays: number;
+  bestStreak: number;
+  level: number;
+  xpToNext: number;
+  daysInactive: number;
+  timeLeft: string;
+  minutesLeft: number;
+  day: string;
 };
 
-export function coachTone({ questCount, doneCount }: CoachInput): CoachTone {
-  if (questCount === 0) return "empty";
-  if (doneCount === questCount) return "win";
-  if (doneCount === 0) return "roast";
-  return "nudge";
+export type RoastResult = {
+  trigger: RoastTrigger;
+  line: string;
+  tone: CoachTone;
+};
+
+const LATE_NIGHT_MINUTES = 4 * 60;
+
+export function pickRoast(lines: readonly string[], seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return lines[hash % lines.length];
 }
 
-/** Rival-board lines. Sentence case, no em dashes. */
-export function coachLine(input: CoachInput): string {
-  const { questCount, doneCount, streakDays } = input;
-  const remaining = questCount - doneCount;
+export function roastTrigger(input: RoastInput): RoastTrigger {
+  const remaining = input.quests.filter((quest) => !quest.done).length;
+  const hasQuests = input.quests.length > 0;
 
-  if (questCount === 0) {
-    return "Tap Add on a starter. A blank board stays Rank E.";
+  if (input.daysInactive >= 7) return "inactive_7d";
+  if (input.daysInactive >= 3) return "inactive_3d";
+  if (input.streakDays === 0 && input.bestStreak > 0 && input.daysInactive >= 1) {
+    return "streak_broken";
   }
-  if (doneCount === 0) {
-    if (streakDays <= 0) {
-      return "Zero check-ins. Your streak is a rumor. Tap one box.";
-    }
-    return `Streak of ${streakDays} and nothing done today. Do not bottle it.`;
+  if (hasQuests && remaining > 0 && input.streakDays > 0 && remaining === input.quests.length) {
+    return "streak_at_risk";
   }
-  if (remaining === 0) {
-    return "Board cleared. Come back tomorrow or it was a fluke.";
+  if (hasQuests && remaining > 0 && input.minutesLeft <= LATE_NIGHT_MINUTES) {
+    return "late_night";
   }
-  if (remaining === 1) {
-    return "One left. Finish it. Half-done is still extra energy.";
+  if (hasQuests && remaining > 0 && input.level <= 9 && input.bestStreak >= 3) {
+    return "low_level";
   }
-  return `${remaining} still open. You adding quests for decoration?`;
+  if (hasQuests && remaining > 0) return "skipped_habit";
+  if (hasQuests && remaining === 0) return "level_up_roast";
+  return "motivational_mean";
+}
+
+function varsFor(trigger: RoastTrigger, input: RoastInput): Record<string, string> {
+  const missed = input.quests.filter((quest) => !quest.done);
+  const streakCopy =
+    trigger === "streak_broken" && input.streakDays === 0 ? input.bestStreak : input.streakDays;
+  return {
+    name: input.name,
+    streak_days: String(streakCopy),
+    best_streak: String(input.bestStreak),
+    level: String(input.level),
+    xp_to_next: String(input.xpToNext),
+    days_inactive: String(input.daysInactive),
+    habit_name: missed[0]?.name ?? "",
+    habits_missed: missed.length > 0 ? String(missed.length) : "",
+    time_left: input.timeLeft,
+  };
+}
+
+function usable(line: string, vars: Record<string, string>): boolean {
+  for (const match of line.matchAll(/\{([a-z_]+)\}/g)) {
+    if (!vars[match[1]]) return false;
+  }
+  return true;
+}
+
+function fill(line: string, vars: Record<string, string>): string {
+  return line.replace(/\{([a-z_]+)\}/g, (_, key: string) => vars[key] ?? `{${key}}`);
+}
+
+export function roastLine(input: RoastInput, force?: RoastTrigger): RoastResult {
+  const trigger = force ?? roastTrigger(input);
+  const vars = varsFor(trigger, input);
+  const pool = ROAST_COPY[trigger].filter((line) => usable(line, vars));
+  const fallback = ROAST_COPY.motivational_mean.filter((line) => usable(line, vars));
+  const lines = pool.length > 0 ? pool : fallback;
+  const seed = `${input.day}:${trigger}:${input.streakDays}:${input.daysInactive}:${input.quests.length}`;
+  const picked = pickRoast(lines, seed);
+  const remaining = input.quests.filter((quest) => !quest.done).length;
+  return {
+    trigger: pool.length > 0 ? trigger : "motivational_mean",
+    line: fill(picked, vars),
+    tone: remaining === 0 && input.quests.length > 0 ? "win" : "roast",
+  };
+}
+
+export function coachLine(input: RoastInput, force?: RoastTrigger): string {
+  return roastLine(input, force).line;
 }

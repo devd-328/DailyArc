@@ -122,7 +122,7 @@ Background: --paper with halftone dots fading in from the top (dots scale up wit
 - Secondary text (--ink-soft) is 4.9:1 on --paper and 5.5:1 on white. It is not used on --paper-2 at small sizes (4.3:1).
 
 ## Copy tone
-Plain and punchy, like a quest board. Describe what happens. Rival roast is allowed on the quest home when the board is unfinished (see `lib/coach.ts`). Keep it motivating, not cruel, and never about body, money or family. Examples: "Quest done. +20 XP." "Check in for today." "Streak: 7 days." "Pick your first quests." "Tap Add on a starter. A blank board stays Rank E." "No card yet." Sentence case, no em dashes.
+Plain and punchy, like a quest board. Describe what happens. The quest home always shows a rotating rival roast from the owner pool in `lib/roast-copy.ts`. Roast habits and effort only, never body, family or identity. Leaderboard rival lines are stored but unused in v1. Sentence case, no em dashes.
 
 ## Screen references
 Open these files in a browser to see each screen. Values below are the ones to match.

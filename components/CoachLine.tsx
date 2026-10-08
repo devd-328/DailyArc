@@ -1,16 +1,22 @@
-import { coachLine, coachTone, type CoachInput } from "@/lib/coach";
+import type { CoachTone } from "@/lib/coach";
 
-export function CoachLine(input: CoachInput) {
-  const tone = coachTone(input);
-  const line = coachLine(input);
-  const fill =
-    tone === "roast" ? "bg-pink" : tone === "win" ? "bg-teal" : tone === "empty" ? "bg-sun" : "bg-card";
+export function CoachLine({
+  line,
+  tone,
+  label = "Today's roast",
+}: {
+  line: string;
+  tone: CoachTone;
+  label?: string;
+}) {
+  const fill = tone === "win" ? "bg-teal" : "bg-pink";
 
   return (
     <p
-      className={`rounded-card border-2 border-ink px-3.5 py-3 text-[15px] font-bold leading-snug shadow-row ${fill}`}
+      className={`rounded-card border-2 border-ink px-4 py-3.5 text-[15px] font-bold leading-snug shadow-row ${fill}`}
       role="status"
     >
+      <span className="mb-1 block font-display text-[19px] leading-none">{label}</span>
       {line}
     </p>
   );

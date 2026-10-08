@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { applyStreakBonus, localCheckinDate, periodStart } from "./streaks";
+import {
+  applyStreakBonus,
+  daysInactiveSince,
+  formatTimeLeft,
+  localCheckinDate,
+  minutesUntilDayReset,
+  periodStart,
+} from "./streaks";
 
 describe("applyStreakBonus", () => {
   it("awards no bonus below 7 days", () => {
@@ -48,5 +55,24 @@ describe("periodStart", () => {
     expect(periodStart("2026-10-07", "weekly")).toBe("2026-10-05"); // Wednesday
     expect(periodStart("2026-10-05", "weekly")).toBe("2026-10-05"); // Monday
     expect(periodStart("2026-10-11", "weekly")).toBe("2026-10-05"); // Sunday
+  });
+});
+
+describe("minutesUntilDayReset", () => {
+  it("counts down to 3:00 AM local time", () => {
+    const evening = new Date("2026-10-08T17:00:00Z");
+    expect(minutesUntilDayReset(evening, "Asia/Karachi")).toBe(300);
+    expect(formatTimeLeft(300)).toBe("5 hours");
+    const late = new Date("2026-10-07T21:30:00Z");
+    expect(minutesUntilDayReset(late, "Asia/Karachi")).toBe(30);
+    expect(formatTimeLeft(30)).toBe("30 minutes");
+  });
+});
+
+describe("daysInactiveSince", () => {
+  it("is 0 with no check-in, and counts whole days after one", () => {
+    expect(daysInactiveSince(null, "2026-10-08")).toBe(0);
+    expect(daysInactiveSince("2026-10-08", "2026-10-08")).toBe(0);
+    expect(daysInactiveSince("2026-10-01", "2026-10-08")).toBe(7);
   });
 });

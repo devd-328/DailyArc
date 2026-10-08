@@ -1,6 +1,7 @@
 "use client";
 
 import { crossedRankBoundary, parseCheckInResult } from "@/lib/checkin";
+import { roastLine, type RoastInput } from "@/lib/coach";
 import { applyStreakBonus } from "@/lib/streaks";
 import { quests as questConfig, STAT_LABELS, streaks, type Rank } from "@/lib/config";
 import type { QuestRow } from "@/lib/profile";
@@ -18,11 +19,13 @@ export function QuestBoard({
   streakDays,
   rank,
   starters,
+  roast,
 }: {
   quests: BoardQuest[];
   streakDays: number;
   rank: Rank;
   starters: readonly StarterTemplate[];
+  roast: Omit<RoastInput, "quests">;
 }) {
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -35,6 +38,7 @@ export function QuestBoard({
   const questNames = [...quests.map((quest) => quest.name), ...justAdded];
   const openStarters = starters.filter((item) => !starterAdded(item.name, questNames));
   const empty = quests.length === 0;
+  const roastResult = roastLine({ ...roast, quests });
 
   async function checkIn(questId: string) {
     if (pendingId) return;
@@ -70,15 +74,14 @@ export function QuestBoard({
 
   return (
     <>
+      <div className="mt-[22px]">
+        <CoachLine line={roastResult.line} tone={roastResult.tone} />
+      </div>
       {empty ? (
-        <div className="mt-[22px] lg:hidden">
+        <div className="mt-3 lg:hidden">
           <HowItWorks compact />
         </div>
-      ) : (
-        <div className="mt-[22px]">
-          <CoachLine questCount={quests.length} doneCount={doneCount} streakDays={streakDays} />
-        </div>
-      )}
+      ) : null}
 
       <div className="mt-[18px] flex items-baseline justify-between">
         <h2 className="font-display text-[22px]">{empty ? "Pick your first quests" : "Today's quests"}</h2>

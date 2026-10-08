@@ -5,6 +5,7 @@ import { RankBadge } from "@/components/RankBadge";
 import { XpBar } from "@/components/XpBar";
 import { STARTER_TEMPLATES } from "@/lib/quest-templates";
 import { loadQuestBoard, progressFromProfile, requireProfile } from "@/lib/profile";
+import { daysInactiveSince, formatTimeLeft, minutesUntilDayReset } from "@/lib/streaks";
 import { requireUser } from "@/lib/supabase/session";
 import { watcherTypeLabel } from "@/lib/watcherType";
 import { connection } from "next/server";
@@ -27,6 +28,18 @@ async function QuestsBody() {
   const board = await loadQuestBoard(profile, now);
   const nextLevel = progress.toNext === 0 ? null : progress.level + 1;
   const typeLabel = watcherTypeLabel(profile.watcher_type);
+  const minutesLeft = minutesUntilDayReset(now, profile.timezone);
+  const roast = {
+    name: profile.username,
+    streakDays: profile.current_streak,
+    bestStreak: profile.longest_streak,
+    level: progress.level,
+    xpToNext: Math.max(0, progress.toNext - progress.intoLevel),
+    daysInactive: daysInactiveSince(profile.last_checkin_date, board.localDay),
+    timeLeft: formatTimeLeft(minutesLeft),
+    minutesLeft,
+    day: board.localDay,
+  };
 
   return (
     <div className="app-split">
@@ -69,6 +82,7 @@ async function QuestsBody() {
           streakDays={profile.current_streak}
           rank={progress.rank}
           starters={STARTER_TEMPLATES}
+          roast={roast}
         />
       </div>
 
