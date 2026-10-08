@@ -2,20 +2,12 @@
 // Nothing is written to Supabase Storage, disk, or logs.
 
 import { proof as proofConfig } from "@/lib/config";
+import { pickProofRoast } from "@/lib/proof-roasts";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 const MODEL = process.env.PROOF_MODEL ?? "qwen/qwen3.8-27b";
-
-// Instant, free roasts for the "no proof" path (no AI call needed)
-const NO_PROOF_ROASTS = [
-  "No proof? I didn't trust my ex either, so why would I trust you?",
-  "You say you did it. The evidence says you did not.",
-  "Trust issues activated. Show proof or it never happened.",
-  "That is a lot of confidence for zero evidence.",
-  "Bro really thought 'trust me' counts as proof.",
-];
 
 const SYSTEM_PROMPT = `You are the Quest Master of DailyArc, a habit app with anime energy. Users submit a photo as proof they completed a quest. Your job is to judge the proof and reply with a short verdict.
 
@@ -44,10 +36,6 @@ EXAMPLES OF THE TONE
 - "A random photo of a wall? Bro, the gym called. It does not know you."
 - "Day 4 of 'I'll do it tomorrow.' Tomorrow is tired of you."
 - "Nice try. I have trust issues, and you just made them worse."`;
-
-function pick<T>(items: T[]): T {
-  return items[Math.floor(Math.random() * items.length)];
-}
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -88,7 +76,7 @@ export async function POST(req: Request) {
 
   // Path 1: no proof given. Instant roast, no AI call, no XP.
   if (!(image instanceof Blob)) {
-    const message = pick(NO_PROOF_ROASTS);
+    const message = pickProofRoast("no_proof");
     const { error } = await admin.from("quest_completions").insert({
       user_id: user.id,
       quest_id: quest.id,

@@ -151,7 +151,7 @@ The client never sends an XP value. XP comes only from the quest record.
 
 1. The quest checkbox opens a sheet and starts the device camera (`getUserMedia`, rear camera when the phone has one). There is no gallery picker. Snap grabs one frame, then the camera turns off. The browser resizes that frame to 800px wide and re-encodes it as a JPEG at quality 0.6 (`lib/proof-image.ts`). That canvas step drops EXIF, including GPS. If the camera is blocked or missing, the sheet stops. A saved photo is not accepted.
 2. The sheet posts the JPEG to this route. The route holds it in memory, sends it to the vision model, and drops it when the response ends.
-3. A pass, fail, or missing photo is stored in `quest_completions` (verdict, quest id, time, base XP, short reason). A blurry or unreadable photo returns `unclear` and is not stored, so the user can retake it.
+3. A pass, fail, or missing photo is stored in `quest_completions` (verdict, quest id, time, base XP, short reason). A missing photo uses a random line from `lib/proof-roasts.ts` and does not call the model. A blurry or unreadable photo returns `unclear` and is not stored, so the user can retake it. A real photo is still judged by the model.
 4. On a pass, the sheet calls `POST /api/checkins`. Profile XP, stats, and the streak still change only inside `check_in()`.
 5. The sheet shows the model's line immediately: a hype line on a pass, a roast on a fail, or a request to retake when the photo is unclear. The privacy line on the sheet is: "Your proof is checked and deleted instantly. We never save your photos."
 
