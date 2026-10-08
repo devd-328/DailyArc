@@ -122,7 +122,7 @@ Background: --paper with halftone dots fading in from the top (dots scale up wit
 - Secondary text (--ink-soft) is 4.9:1 on --paper and 5.5:1 on white. It is not used on --paper-2 at small sizes (4.3:1).
 
 ## Copy tone
-Plain and punchy, like a quest board. Describe what happens. Examples: "Quest done. +20 XP." "Check in for today." "Streak: 7 days." "Pick your first quests." "No card yet." Sentence case, no em dashes.
+Plain and punchy, like a quest board. Describe what happens. Rival roast is allowed on the quest home when the board is unfinished (see `lib/coach.ts`). Keep it motivating, not cruel, and never about body, money or family. Examples: "Quest done. +20 XP." "Check in for today." "Streak: 7 days." "Pick your first quests." "Tap Add on a starter. A blank board stays Rank E." "No card yet." Sentence case, no em dashes.
 
 ## Screen references
 Open these files in a browser to see each screen. Values below are the ones to match.
@@ -162,8 +162,9 @@ First-visit variant: until the user opens their card once, show the large pink p
 Bottom tab bar: as in Components, Quests active.
 
 ### Other screens, key points
-- Landing: wordmark (Dela Gothic One 20) and a "Sign in" pill in the header. Hero in Dela Gothic One 48px, 1.05 line height, with one word in --pink and a 3px 3px 0 ink text shadow ("Find your anime type."). One-line lead (16px 500). Username input and a pink "Make my card" button, then "No account needed for the card." Then a panel "Then level up for real" with a small "Sign up" button. A sample card tilted 4 degrees pokes up from the bottom edge.
-- Landing is designed mobile first (the 390-wide mockup). Below about 380px the hero can drop to 40px so "Find your anime type." still fits. From 768px the same stacked layout sits in a wider column and more of the sample card is visible below the form. From 1024px the form sits on the left and the sample card sits on the right. Tokens, type, and components stay the same. Padding uses the device safe area.
+- Landing: wordmark (Dela Gothic One 20) and a "Sign in" pill in the header. Hero in Dela Gothic One 48px, 1.05 line height, with one word in --pink and a 3px 3px 0 ink text shadow ("Find your anime type."). One-line lead (16px 500). Username input and a pink "Make my card" button, then "No account needed for the card." Then three short how-to lines, then a panel "No AniList? Still play." with a pink "Start quests" button. A sample card tilted 4 degrees sits in document flow under the form. On the phone it is clipped to a 240px peek. It must not overlap the form or sit off-center. From 1024px the form sits on the left and the full sample card sits on the right.
+- Landing is designed mobile first (the 390-wide mockup). Below about 380px the hero can drop to 40px so "Find your anime type." still fits. From 768px the same stacked layout sits in a wider column and more of the sample card is visible below the form. From 1024px the form sits on the left and the sample card sits on the right. Tokens, type, and components stay the same. Padding uses the device safe area. Card previews use `min(100%, 1080px * scale)` so they never overflow a modal or column.
+- Signed-in app, from 1024px: left tab rail (220px, --ink) and a two-column main (board + how-it-works rail). Below 1024px the tab bar stays on the bottom (PWA-ready). New quest is a bottom sheet on small screens and a centered dialog (max-width 32rem, max-height 80dvh) from 1024px.
 - Wrapped result: card preview, then "Save for story" (pink), "Save square" and "Copy link" (white, side by side). A visitor also sees a panel "Add your rank to this card" with a pink "Sign up" button.
 - Sign in or sign up: title in Dela Gothic One 32. Pink "Continue with AniList", white "Continue with Google", a divider with "or", an email input and "Email me a sign-in link", then "No password. We send you a link."
 - New quest: sheet over the dimmed quests screen. Fields in order: name, Trains (five stat chips), XP (10, 20, 30), Repeats (Daily, Weekly), pink "Save quest", and "x of 8 quests used after saving".

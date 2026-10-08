@@ -24,9 +24,9 @@ Installed and working (see package.json for exact versions):
 This Next.js version is newer than most model knowledge. Before writing Next.js code, read the matching guide in `node_modules/next/dist/docs/` (see AGENTS.md). Do not rely on memory for Next.js APIs.
 
 Not installed yet:
-- Supabase Postgres tables and RLS, added with onboarding and quests
-- AniList GraphQL API for anime data. The card needs no login, only a public username. Quests, profile and the public page need an account: sign in with AniList, Google or email (see Auth in ARCHITECTURE.md)
 - Hosting: Vercel
+
+Env (see `.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANILIST_CLIENT_ID`, `ANILIST_CLIENT_SECRET`, `ANILIST_REDIRECT_URI`. Register the redirect URI on the AniList app. It must match exactly.
 
 ## Working rules
 - Ship the smallest version that can be shown to a friend.
@@ -51,7 +51,7 @@ The approved mockups are the HTML files in /mockups (start with home-v2.html). T
 ## Folder layout
 /app            routes and pages. app/fonts holds the self-hosted katakana subset for sound effects
 /components     UI components (card, stat screen, quest row)
-/lib            pure functions and config. Exists now: config.ts, types.ts, xp.ts, ranks.ts, streaks.ts, seasons.ts, stats.ts, watcherType.ts, username.ts, anilist.ts, wrapped.ts, card.ts, tokens.ts, profile.ts, checkin.ts, supabase clients
+/lib            pure functions and config. Exists now: config.ts, types.ts, xp.ts, ranks.ts, streaks.ts, seasons.ts, stats.ts, watcherType.ts, username.ts, anilist.ts, anilist-oauth.ts, anilist-link.ts, wrapped.ts, card.ts, tokens.ts, profile.ts, checkin.ts, supabase clients
 /supabase/migrations  SQL for profiles, quests, check-ins and stats (run in the Supabase SQL editor)
 /styles         tokens.css (design tokens, imported by app/globals.css and mapped to Tailwind there)
 /brain          these brain files
@@ -60,8 +60,8 @@ The approved mockups are the HTML files in /mockups (start with home-v2.html). T
 Tests sit next to the code they test (for example lib/config.test.ts).
 
 ## Setup status
-Done: Next.js scaffold, Tailwind with design tokens, fonts (Dela Gothic One, Zen Kaku Gothic New, katakana subset), Vitest, `lib/config.ts`, the pure functions listed under /lib (with unit tests), the public landing screen, AniList fetch, `GET /api/wrapped/[username]`, the Wrapped result page, card image export, `/login` with Google and email magic link (AniList button is on the screen, not wired), `/onboarding`, the signed-in tabs `/quests`, `/stats`, `/cards`, `/profile`, public `/u/[username]`, and `/rank-up` after a check-in that crosses a rank. Quests and public profiles need the SQL in `supabase/migrations` applied to the Supabase project. The quests home pink card prompt only appears when `anilist_username` is set (AniList OAuth is not built, so it stays hidden).
-Not done yet: AniList OAuth, starter quest templates (owner writes those), account deletion, and IP rate limiting on public APIs.
+Done: Next.js scaffold, Tailwind with design tokens, fonts (Dela Gothic One, Zen Kaku Gothic New, katakana subset), Vitest, `lib/config.ts`, the pure functions listed under /lib (with unit tests), the public landing screen, AniList fetch, `GET /api/wrapped/[username]`, the Wrapped result page, card image export, `/login` with Google, email magic link and AniList OAuth, `/onboarding`, the signed-in tabs `/quests`, `/stats`, `/cards`, `/profile`, public `/u/[username]`, and `/rank-up` after a check-in that crosses a rank. Quests, public profiles and AniList linking need the SQL in `supabase/migrations` applied to the Supabase project, plus AniList and service-role env vars.
+Not done yet: owner-approved extra starter/side quest copy (v1 ships the 5 names from the quests mockup in `lib/quest-templates.ts`), account deletion, and IP rate limiting on public APIs.
 Dark mode is not implemented (light first).
 
 ## Definition of done

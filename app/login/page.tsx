@@ -1,3 +1,4 @@
+import { HowItWorks } from "@/components/HowItWorks";
 import { LoginForm } from "@/components/LoginForm";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
@@ -35,14 +36,17 @@ async function LoginBody() {
   if (data?.claims) redirect("/onboarding");
 
   return (
-    <div className="mx-auto w-full max-w-[390px] md:max-w-md">
-      <h1 className="font-display text-[32px] leading-[1.1]">Sign in or sign up</h1>
-      <p className="mt-3 text-[15px] font-medium leading-normal">
-        One account for quests, your rank and your public page.
-      </p>
-      <Suspense>
-        <LoginForm />
-      </Suspense>
+    <div className="mx-auto grid w-full max-w-[390px] gap-6 md:max-w-md lg:max-w-4xl lg:grid-cols-2 lg:items-start lg:gap-10">
+      <div>
+        <h1 className="font-display text-[32px] leading-[1.1]">Sign in or sign up</h1>
+        <p className="mt-3 text-[15px] font-medium leading-normal">
+          One account for quests, XP and a rank. AniList is optional. It only unlocks the shareable card.
+        </p>
+        <Suspense>
+          <LoginForm />
+        </Suspense>
+      </div>
+      <HowItWorks />
     </div>
   );
 }

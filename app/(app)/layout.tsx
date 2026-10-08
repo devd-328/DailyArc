@@ -18,8 +18,8 @@ async function AppShell({ children }: { children: ReactNode }) {
   const user = await requireUser();
   await requireProfile(user.id);
   return (
-    <div className="halftone relative min-h-dvh overflow-x-clip pb-[calc(76px+env(safe-area-inset-bottom))]">
-      <div className="page-gutter mx-auto w-full max-w-[390px] md:max-w-md">{children}</div>
+    <div className="app-shell halftone relative min-h-dvh overflow-x-clip">
+      <div className="page-gutter app-main mx-auto w-full">{children}</div>
       <TabBar />
     </div>
   );
@@ -27,8 +27,8 @@ async function AppShell({ children }: { children: ReactNode }) {
 
 function AppShellFallback() {
   return (
-    <div className="halftone relative min-h-dvh overflow-x-clip pb-[calc(76px+env(safe-area-inset-bottom))]">
-      <div className="page-gutter mx-auto w-full max-w-[390px] md:max-w-md" />
+    <div className="app-shell halftone relative min-h-dvh overflow-x-clip">
+      <div className="page-gutter app-main mx-auto w-full" />
     </div>
   );
 }

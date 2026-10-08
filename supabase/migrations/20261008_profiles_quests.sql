@@ -152,6 +152,8 @@ EXECUTE FUNCTION public.init_stats_for_profile();
 CREATE OR REPLACE FUNCTION public.protect_profile_progress()
 RETURNS trigger
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
@@ -162,6 +164,16 @@ BEGIN
     NEW.watcher_type := NULL;
     NEW.anilist_user_id := NULL;
     NEW.anilist_username := NULL;
+    SELECT
+      CASE
+        WHEN (u.raw_app_meta_data->>'anilist_user_id') ~ '^[0-9]+$'
+          THEN (u.raw_app_meta_data->>'anilist_user_id')::bigint
+        ELSE NULL
+      END,
+      NULLIF(u.raw_app_meta_data->>'anilist_username', '')
+    INTO NEW.anilist_user_id, NEW.anilist_username
+    FROM auth.users u
+    WHERE u.id = NEW.id;
     RETURN NEW;
   END IF;
   IF current_user NOT IN ('authenticated', 'anon') THEN

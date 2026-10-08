@@ -46,11 +46,11 @@ export function NewQuestSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-30">
+    <div className="fixed inset-0 z-30 flex items-end justify-center lg:items-center lg:p-6">
       <button type="button" className="absolute inset-0 bg-[var(--dim)]" aria-label="Close" onClick={onClose} />
       <form
         onSubmit={(event) => void save(event)}
-        className="absolute inset-x-0 bottom-0 rounded-t-card border-2 border-b-0 border-ink bg-card px-5 pb-[22px] pt-[18px]"
+        className="sheet-panel relative z-10 w-full max-w-lg overflow-y-auto rounded-t-card border-2 border-b-0 border-ink bg-card px-5 pt-[18px] lg:rounded-card lg:border-b-2 lg:shadow-panel"
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="font-display text-[22px]">New quest</h3>

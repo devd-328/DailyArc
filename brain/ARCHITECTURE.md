@@ -56,7 +56,7 @@ Sign in methods (one screen for sign in and sign up):
 - Google.
 - AniList.
 
-AniList note (to verify before building): Supabase Auth has no built-in AniList provider that I have confirmed. AniList uses OAuth 2 but is not a standard OpenID Connect provider. Plan: a custom route `/auth/anilist` redirects to AniList, `/auth/anilist/callback` exchanges the code on the server, calls the AniList `Viewer` query to get the verified id and name, then either links it to the signed-in user or signs in the user who already has that id (using the Supabase admin API). Check the current Supabase and AniList docs first. If this proves too costly, ship email and Google first and add AniList linking right after.
+AniList is not a Supabase Auth provider and is not OpenID Connect (no userinfo URL, no scopes). Custom routes implement the [AniList authorization code grant](https://docs.anilist.co/guide/auth/authorization-code): `/auth/anilist` redirects to AniList, `/auth/anilist/callback` exchanges the code on the server, then the AniList `Viewer` query returns the verified id and name. The access token is not stored. The callback either links that identity to the signed-in user or signs in the user who already has that AniList id (Supabase admin `generateLink` plus `verifyOtp`). AniList-only accounts use a non-mailable email `anilist.{id}@anilist.invalid`. The verified id and name are written to `auth.users` `app_metadata` and, when a profile exists, to `profiles` with the service role. A typed AniList username is never treated as owned.
 
 Linking rules:
 - `anilist_user_id` and `anilist_username` are set only from the verified AniList response, never from client input.
@@ -76,7 +76,7 @@ id (uuid, = auth user id), username (unique), anilist_user_id (nullable, unique)
 
 - Level is not stored. It is derived from `total_xp`, so the two cannot drift apart.
 - `username` is the public name used in `/u/[username]`. It is chosen by the user and does not have to match the AniList name.
-- `anilist_username` and `anilist_user_id` are only set by the AniList link flow, never from client input. This stops someone from claiming another user's AniList name and showing a rank on it.
+- `anilist_username` and `anilist_user_id` are only set by the AniList link flow, never from client input. This stops someone from claiming another user's AniList name and showing a rank on it. On profile insert, `protect_profile_progress` copies those fields from `auth.users.app_metadata` if the OAuth callback already stored them, then clients still cannot change them.
 - `watcher_type` is filled when the AniList account is linked and the Wrapped data has been computed. It stays null for users without AniList.
 - `current_streak` is the daily streak: a day counts when at least one daily quest was checked in. Weekly quests do not count toward it.
 
@@ -144,8 +144,9 @@ Creating a quest is limited to 8 active quests, enforced in the database with a 
 ## Starter quests and side quests
 
 ### Starter quests (v1)
+- v1 serves starter templates from `lib/quest-templates.ts` (the seed file). Names match `mockups/screens-quests.html`. The `quest_templates` table can be wired later without changing the API.
 - `GET /api/quest-templates?kind=starter` returns the active starter templates (5 to 8 are shown).
-- `POST /api/quests/from-template { template_id }` creates a normal daily quest by copying name, stat and XP from the template on the server. The client sends only the template id. The 8 quest limit applies.
+- `POST /api/quests/from-template { template_id }` creates a normal daily quest by copying name, stat and XP from the template on the server. The client sends only the template id. The 8 quest limit applies. Adding the same starter twice returns the existing quest. `template_id` on the row stays null until a security-definer insert exists, because `protect_quest_client_fields` clears it on client inserts.
 
 ### Daily side quest (v1.1)
 - `GET /api/side-quest` returns today's side quest. If today's row does not exist, the server picks a random active `side` template that is not yesterday's, and inserts the row.

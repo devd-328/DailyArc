@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { WrappedCard, type WrappedCardData } from "./WrappedCard";
 
 export function CardPreview({
@@ -8,20 +9,12 @@ export function CardPreview({
   /** If omitted, uses `--card-preview-scale` so the preview can change with the viewport. */
   scale?: number;
 }) {
-  const scaleCss = scale != null ? String(scale) : "var(--card-preview-scale, 0.3)";
-
   return (
     <div
-      className="relative overflow-hidden border-2 border-ink shadow-panel"
-      style={{
-        width: `calc(1080px * ${scaleCss})`,
-        height: `calc(1920px * ${scaleCss})`,
-      }}
+      className="card-preview border-2 border-ink shadow-panel"
+      style={scale != null ? ({ "--card-preview-scale": String(scale) } as CSSProperties) : undefined}
     >
-      <div
-        className="absolute top-0 left-0 origin-top-left"
-        style={{ width: 1080, height: 1920, transform: `scale(${scaleCss})` }}
-      >
+      <div className="card-preview-stage">
         <WrappedCard data={data} />
       </div>
     </div>

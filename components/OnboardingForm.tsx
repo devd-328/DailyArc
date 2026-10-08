@@ -5,9 +5,17 @@ import { isDailyArcUsername } from "@/lib/username";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-export function OnboardingForm({ userId }: { userId: string }) {
+export function OnboardingForm({
+  userId,
+  defaultUsername = "",
+  hasAniList = false,
+}: {
+  userId: string;
+  defaultUsername?: string;
+  hasAniList?: boolean;
+}) {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(defaultUsername);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -36,6 +44,9 @@ export function OnboardingForm({ userId }: { userId: string }) {
       }
       setError("Could not save. Try again.");
       return;
+    }
+    if (hasAniList) {
+      await fetch("/api/profile/refresh-card", { method: "POST" });
     }
     router.replace("/quests");
     router.refresh();
@@ -66,7 +77,7 @@ export function OnboardingForm({ userId }: { userId: string }) {
         disabled={busy}
         className="mt-4 flex min-h-12 w-full items-center justify-center rounded-btn border-2 border-ink bg-pink text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed disabled:opacity-60"
       >
-        Start quests
+        Pick my first quests
       </button>
       {error ? (
         <p className="mt-2 text-[13px] font-medium" role="alert">

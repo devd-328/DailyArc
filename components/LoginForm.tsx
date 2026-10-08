@@ -1,5 +1,6 @@
 "use client";
 
+import { authErrorMessage } from "@/lib/anilist-oauth";
 import { createClient } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
@@ -11,9 +12,7 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(
-    searchParams.get("error") ? "Sign in didn't finish. Try again." : null,
-  );
+  const [error, setError] = useState<string | null>(authErrorMessage(searchParams.get("error")));
   const [busy, setBusy] = useState<"google" | "email" | null>(null);
 
   async function signInGoogle() {
@@ -61,13 +60,13 @@ export function LoginForm() {
   return (
     <div className="mt-5 flex flex-col">
       <div className="flex flex-col gap-3">
-        <button
-          type="button"
+        <a
+          href="/auth/anilist?next=/onboarding"
           className="flex min-h-12 w-full items-center justify-center gap-2.5 rounded-btn border-2 border-ink bg-pink text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed"
         >
           <ProviderGlyph letter="A" />
           Continue with AniList
-        </button>
+        </a>
         <button
           type="button"
           disabled={busy != null}
@@ -79,7 +78,7 @@ export function LoginForm() {
         </button>
       </div>
       <p className="mt-2.5 text-[13px] font-medium text-ink-soft">
-        AniList also links your card to your account.
+        Google or email if you have no AniList. You can link it later.
       </p>
 
       <div className="my-[18px] flex items-center gap-3 text-sm font-bold text-ink-soft">

@@ -32,7 +32,7 @@ export async function generateMetadata({
 export default function PublicProfilePage({ params }: PageProps<"/u/[username]">) {
   return (
     <main className="halftone relative min-h-dvh overflow-x-clip">
-      <div className="page-gutter mx-auto w-full max-w-[390px] md:max-w-md">
+      <div className="page-gutter mx-auto w-full max-w-[390px] md:max-w-md lg:max-w-xl">
         <Suspense fallback={<SiteHeaderFallback />}>
           <SiteHeader />
         </Suspense>

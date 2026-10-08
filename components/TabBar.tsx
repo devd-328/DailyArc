@@ -48,14 +48,17 @@ const TABS = [
 export function TabBar() {
   const pathname = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 flex h-[76px] items-center justify-around bg-ink px-2 pb-[env(safe-area-inset-bottom)]">
+    <nav className="app-tabbar">
+      <Link href="/quests" className="mb-6 hidden font-display text-xl text-paper lg:block">
+        DailyArc
+      </Link>
       {TABS.map((tab) => {
         const active = pathname === tab.href;
         return (
           <Link
             key={tab.href}
             href={tab.href}
-            className={`flex h-[52px] min-w-[72px] flex-col items-center justify-center gap-0.5 rounded-btn border-2 text-[13px] font-bold ${
+            className={`flex h-[52px] min-w-[72px] flex-col items-center justify-center gap-0.5 rounded-btn border-2 text-[13px] font-bold lg:w-full lg:flex-row lg:justify-start lg:gap-3 lg:px-3 ${
               active ? "border-paper bg-pink text-ink" : "border-transparent text-paper"
             }`}
           >

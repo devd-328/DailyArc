@@ -3,12 +3,18 @@
 import { useState } from "react";
 import { cardDownloadName, type CardFormat } from "@/lib/card";
 
-export function WrappedActions({ username }: { username: string }) {
+export function WrappedActions({
+  username,
+  copyPath,
+}: {
+  username: string;
+  copyPath?: string;
+}) {
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState<CardFormat | null>(null);
 
   async function copyLink() {
-    const url = `${window.location.origin}/wrapped/${username}`;
+    const url = `${window.location.origin}${copyPath ?? `/wrapped/${username}`}`;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);

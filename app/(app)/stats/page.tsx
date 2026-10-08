@@ -29,7 +29,8 @@ async function StatsBody() {
   const next = nextRankAt(progress.level);
 
   return (
-    <>
+    <div className="app-split">
+    <div className="min-w-0">
       <header className="relative mb-4">
         <h1 className="pr-36 font-display text-[32px]">Stats</h1>
         <div className="absolute top-0 right-0 rotate-[3deg] border-2 border-ink bg-sun px-3 py-1.5 text-sm font-bold shadow-row">
@@ -84,9 +85,21 @@ async function StatsBody() {
           </div>
         </div>
       </section>
-      <p className="mt-3.5 text-[13px] font-medium text-ink-soft">
+      <p className="mt-3.5 text-[13px] font-medium text-ink-soft lg:hidden">
         Each bar shows progress to the next level of that stat. Quests raise the stat they train.
       </p>
-    </>
+    </div>
+    <aside className="app-rail">
+      <section className="rounded-card border-2 border-ink bg-card p-4 shadow-panel">
+        <h2 className="font-display text-[22px]">How stats work</h2>
+        <p className="mt-3 text-[15px] font-medium leading-normal">
+          Each quest trains one stat. The bar is progress to the next level of that stat. Top is whichever has the most XP.
+        </p>
+        <p className="mt-3 text-[15px] font-medium leading-normal">
+          Skip a day and the streak resets. XP stays. Rank is from total XP, not vibes.
+        </p>
+      </section>
+    </aside>
+    </div>
   );
 }

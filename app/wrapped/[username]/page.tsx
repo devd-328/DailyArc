@@ -98,10 +98,7 @@ function WrappedMessage({ code }: { code: keyof typeof WRAPPED_ERROR_COPY }) {
 function WrappedFallback() {
   return (
     <div className="mx-auto flex w-full max-w-[390px] flex-col items-center md:max-w-md">
-      <div
-        className="wrapped-result-card rounded-card border-2 border-dashed border-ink-soft bg-card/60"
-        style={{ width: "calc(1080px * var(--card-preview-scale, 0.26))", height: "calc(1920px * var(--card-preview-scale, 0.26))" }}
-      />
+      <div className="card-preview wrapped-result-card rounded-card border-2 border-dashed border-ink-soft bg-card/60" />
     </div>
   );
 }

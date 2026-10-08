@@ -18,6 +18,7 @@ export type ProfileRow = {
   watcher_type: string | null;
   is_public: boolean;
   anilist_username: string | null;
+  anilist_user_id: number | string | null;
 };
 
 export type QuestRow = {
