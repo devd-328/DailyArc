@@ -4,6 +4,7 @@ import { crossedRankBoundary, parseCheckInResult, type CheckInResult } from "@/l
 import { proof } from "@/lib/config";
 import type { Rank } from "@/lib/config";
 import { compressProof } from "@/lib/proof-image";
+import { useScrollLock } from "@/lib/use-scroll-lock";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
@@ -23,6 +24,7 @@ export function ProofSheet({
   onClose: () => void;
 }) {
   const router = useRouter();
+  useScrollLock();
   const inputRef = useRef<HTMLInputElement>(null);
   const closedRef = useRef(false);
   const [phase, setPhase] = useState<Phase>("ask");
@@ -162,14 +164,14 @@ export function ProofSheet({
   const rewardTone = verdict === "yes" ? "bg-teal" : verdict === "unclear" ? "bg-card" : "bg-pink";
 
   return (
-    <div className="fixed inset-0 z-30 flex items-end justify-center lg:items-center lg:p-6">
+    <div className="fixed inset-0 z-30 flex items-end justify-center overflow-hidden overscroll-none lg:items-center lg:p-6">
       <button
         type="button"
         className="absolute inset-0 bg-[var(--dim)]"
         aria-label="Close"
         onClick={close}
       />
-      <div className="sheet-panel relative z-10 w-full max-w-lg rounded-t-card border-2 border-b-0 border-ink bg-card px-5 pb-6 pt-[18px] lg:rounded-card lg:border-b-2 lg:shadow-panel">
+      <div className="sheet-panel relative z-10 w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-card border-2 border-b-0 border-ink bg-card px-5 pb-6 pt-[18px] lg:rounded-card lg:border-b-2 lg:shadow-panel">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="font-display text-[22px]">Show your proof</h3>
           <button

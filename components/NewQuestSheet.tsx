@@ -3,6 +3,7 @@
 import { quests as questConfig, STATS, type Stat } from "@/lib/config";
 import { STAT_LABELS } from "@/lib/config";
 import type { Cadence } from "@/lib/types";
+import { useScrollLock } from "@/lib/use-scroll-lock";
 import { useState, type FormEvent } from "react";
 
 export function NewQuestSheet({
@@ -14,6 +15,7 @@ export function NewQuestSheet({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  useScrollLock();
   const [name, setName] = useState("");
   const [stat, setStat] = useState<Stat>("discipline");
   const [xp, setXp] = useState<(typeof questConfig.allowedXpValues)[number]>(20);
@@ -46,11 +48,11 @@ export function NewQuestSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-end justify-center lg:items-center lg:p-6">
+    <div className="fixed inset-0 z-30 flex items-end justify-center overflow-hidden overscroll-none lg:items-center lg:p-6">
       <button type="button" className="absolute inset-0 bg-[var(--dim)]" aria-label="Close" onClick={onClose} />
       <form
         onSubmit={(event) => void save(event)}
-        className="sheet-panel relative z-10 w-full max-w-lg overflow-y-auto rounded-t-card border-2 border-b-0 border-ink bg-card px-5 pt-[18px] lg:rounded-card lg:border-b-2 lg:shadow-panel"
+        className="sheet-panel relative z-10 w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-card border-2 border-b-0 border-ink bg-card px-5 pt-[18px] lg:rounded-card lg:border-b-2 lg:shadow-panel"
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="font-display text-[22px]">New quest</h3>

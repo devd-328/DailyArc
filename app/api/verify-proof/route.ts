@@ -6,8 +6,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
-
 const MODEL = process.env.PROOF_MODEL ?? "qwen/qwen3.8-27b";
 
 // Instant, free roasts for the "no proof" path (no AI call needed)
