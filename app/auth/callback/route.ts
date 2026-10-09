@@ -1,3 +1,4 @@
+import { callbackRedirectUrl } from "@/lib/anilist-oauth";
 import { getSupabasePublicEnv } from "@/lib/supabase/public-env";
 import { createServerClient } from "@supabase/ssr";
 import { type EmailOtpType } from "@supabase/supabase-js";
@@ -8,9 +9,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const nextPath = safeNext(searchParams.get("next"));
-
-  const success = NextResponse.redirect(new URL(nextPath, origin));
+  const success = NextResponse.redirect(callbackRedirectUrl(origin, searchParams.get("next")));
   const fail = NextResponse.redirect(new URL("/login?error=1", origin));
   const supabase = supabaseOn(request, success);
 
@@ -38,9 +37,4 @@ function supabaseOn(request: NextRequest, response: NextResponse) {
       },
     },
   });
-}
-
-function safeNext(value: string | null): string {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/onboarding";
-  return value;
 }

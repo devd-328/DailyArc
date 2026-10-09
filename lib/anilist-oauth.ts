@@ -15,6 +15,8 @@ export const ANILIST_VIEWER_QUERY = `query {
 }`;
 
 const AUTH_NEXT_PATHS = new Set(["/onboarding", "/quests", "/stats", "/cards", "/profile"]);
+const CALLBACK_FALLBACK = "/onboarding";
+const CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
 
 export type AniListOAuthEnv = {
   clientId: string;
@@ -43,6 +45,50 @@ export function getAniListOAuthEnv(): AniListOAuthEnv | null {
 export function safeAuthNext(value: string | null | undefined): string {
   if (!value || !AUTH_NEXT_PATHS.has(value)) return "/onboarding";
   return value;
+}
+
+/** Post-login redirect for /auth/callback. Exact paths only, then the URL host is checked again. */
+export function safeCallbackNext(value: string | null | undefined): string {
+  if (!value || value.includes("\\") || CONTROL_CHARS.test(value)) return CALLBACK_FALLBACK;
+  const lower = value.toLowerCase();
+  if (lower.includes("%5c") || lower.startsWith("%2f")) return CALLBACK_FALLBACK;
+  if (!AUTH_NEXT_PATHS.has(value)) return CALLBACK_FALLBACK;
+  return value;
+}
+
+export function callbackRedirectUrl(origin: string, nextPath: string | null | undefined): URL {
+  const path = safeCallbackNext(nextPath);
+  const url = new URL(path, origin);
+  if (url.origin !== origin) return new URL(CALLBACK_FALLBACK, origin);
+  return url;
+}
+
+export function isSyntheticAniListEmail(email: string): boolean {
+  const normalized = email.trim().toLowerCase();
+  const at = normalized.lastIndexOf("@");
+  if (at < 0) return false;
+  return normalized.slice(at + 1) === ANILIST_AUTH_EMAIL_DOMAIN;
+}
+
+export function canAdoptServerAniListUser(appMetadata: unknown, anilistUserId: number): boolean {
+  if (!appMetadata || typeof appMetadata !== "object") return false;
+  const record = appMetadata as Record<string, unknown>;
+  if (record.provider_origin === "anilist") return true;
+  const raw = record.anilist_user_id;
+  const id = typeof raw === "number" ? raw : typeof raw === "string" && /^\d+$/.test(raw) ? Number(raw) : null;
+  return id === anilistUserId;
+}
+
+export function storedRefreshTimestamp(appMetadata: unknown, userMetadata: unknown): string | null {
+  const fromApp = timestampField(appMetadata);
+  if (fromApp) return fromApp;
+  return timestampField(userMetadata);
+}
+
+function timestampField(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const value = (metadata as Record<string, unknown>).anilist_refreshed_at;
+  return typeof value === "string" && value.length > 0 ? value : null;
 }
 
 export function anilistAuthEmail(anilistUserId: number): string {

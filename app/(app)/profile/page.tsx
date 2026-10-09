@@ -3,7 +3,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { PublicSwitch } from "@/components/PublicSwitch";
 import { RankBadge } from "@/components/RankBadge";
 import { RefreshCardButton } from "@/components/RefreshCardButton";
-import { authErrorMessage, displayAccountEmail, refreshedAgoLabel } from "@/lib/anilist-oauth";
+import { authErrorMessage, displayAccountEmail, refreshedAgoLabel, storedRefreshTimestamp } from "@/lib/anilist-oauth";
 import { resolveAvatar } from "@/lib/avatar";
 import { progressFromProfile, requireProfile } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/server";
@@ -32,7 +32,7 @@ async function ProfileBody({ searchParams }: { searchParams: PageProps<"/profile
 
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  const refreshedRaw = auth.user?.user_metadata?.anilist_refreshed_at;
+  const refreshedRaw = storedRefreshTimestamp(auth.user?.app_metadata, auth.user?.user_metadata);
   await connection();
   const refreshedAt = typeof refreshedRaw === "string" ? new Date(refreshedRaw) : null;
   const refreshedLabel =

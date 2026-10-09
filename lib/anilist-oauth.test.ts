@@ -10,9 +10,57 @@ import {
   parseOAuthCookie,
   parseViewer,
   refreshedAgoLabel,
+  callbackRedirectUrl,
+  canAdoptServerAniListUser,
+  isSyntheticAniListEmail,
   safeAuthNext,
+  safeCallbackNext,
+  storedRefreshTimestamp,
   suggestedDailyArcUsername,
 } from "./anilist-oauth";
+
+describe("safeCallbackNext", () => {
+  it("allows only the post-login paths and rejects host tricks", () => {
+    expect(safeCallbackNext("/onboarding")).toBe("/onboarding");
+    expect(safeCallbackNext("/quests")).toBe("/quests");
+    expect(safeCallbackNext("/profile")).toBe("/profile");
+    expect(safeCallbackNext("/\\evil.example")).toBe("/onboarding");
+    expect(safeCallbackNext("//evil.example")).toBe("/onboarding");
+    expect(safeCallbackNext("%2f%2fevil.example")).toBe("/onboarding");
+    expect(safeCallbackNext("%5c%5cevil.example")).toBe("/onboarding");
+    expect(safeCallbackNext("/onboarding\u0000")).toBe("/onboarding");
+    expect(safeCallbackNext("/login")).toBe("/onboarding");
+    expect(safeCallbackNext(null)).toBe("/onboarding");
+  });
+
+  it("keeps an allowed path on the request origin", () => {
+    const url = callbackRedirectUrl("https://dailyarc.example", "/cards");
+    expect(url.origin).toBe("https://dailyarc.example");
+    expect(url.pathname).toBe("/cards");
+    const blocked = callbackRedirectUrl("https://dailyarc.example", "/\\evil.example");
+    expect(blocked.origin).toBe("https://dailyarc.example");
+    expect(blocked.pathname).toBe("/onboarding");
+  });
+});
+
+describe("AniList account guards", () => {
+  it("rejects the synthetic mailbox and only adopts a server-marked user", () => {
+    expect(isSyntheticAniListEmail("anilist.42@anilist.invalid")).toBe(true);
+    expect(isSyntheticAniListEmail(" ANILIST.42@Anilist.Invalid ")).toBe(true);
+    expect(isSyntheticAniListEmail("dev@example.com")).toBe(false);
+    expect(canAdoptServerAniListUser({ provider_origin: "anilist" }, 42)).toBe(true);
+    expect(canAdoptServerAniListUser({ anilist_user_id: 42 }, 42)).toBe(true);
+    expect(canAdoptServerAniListUser({ anilist_user_id: 7 }, 42)).toBe(false);
+    expect(canAdoptServerAniListUser({}, 42)).toBe(false);
+    expect(canAdoptServerAniListUser(null, 42)).toBe(false);
+  });
+
+  it("prefers the app_metadata refresh clock and falls back to the old user value", () => {
+    expect(storedRefreshTimestamp({ anilist_refreshed_at: "app" }, { anilist_refreshed_at: "user" })).toBe("app");
+    expect(storedRefreshTimestamp({}, { anilist_refreshed_at: "user" })).toBe("user");
+    expect(storedRefreshTimestamp({}, {})).toBeNull();
+  });
+});
 
 describe("safeAuthNext", () => {
   it("allows signed-in app paths and defaults to onboarding", () => {

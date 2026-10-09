@@ -1,6 +1,6 @@
 "use client";
 
-import { authErrorMessage } from "@/lib/anilist-oauth";
+import { authErrorMessage, isSyntheticAniListEmail } from "@/lib/anilist-oauth";
 import { createClient } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
@@ -41,9 +41,15 @@ export function LoginForm() {
     setBusy("email");
     setError(null);
     setMessage(null);
+    const trimmed = email.trim();
+    if (isSyntheticAniListEmail(trimmed)) {
+      setError("Use a different email address.");
+      setBusy(null);
+      return;
+    }
     const supabase = createClient();
     const { error: otpError } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
+      email: trimmed,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
       },

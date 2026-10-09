@@ -60,107 +60,142 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Quest not found" }, { status: 404 });
   }
 
-  // Daily cap
-  const startOfDay = new Date();
-  startOfDay.setUTCHours(0, 0, 0, 0);
-  const { count } = await supabase
-    .from("quest_completions")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .gte("created_at", startOfDay.toISOString());
-  if ((count ?? 0) >= proofConfig.dailyCap) {
-    return NextResponse.json({ error: "Daily proof limit reached" }, { status: 429 });
+  let proofImage: Blob | null = null;
+  if (image instanceof Blob) {
+    if (image.type !== "image/jpeg") {
+      return NextResponse.json({ error: "Send a JPEG" }, { status: 400 });
+    }
+    if (image.size > proofConfig.maxBytes) {
+      return NextResponse.json({ error: "Image too large" }, { status: 413 });
+    }
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json({ error: "Verification is not configured" }, { status: 500 });
+    }
+    proofImage = image;
   }
 
-  const admin = createAdminClient();
+  const reserved = await reserveProofAttempt(supabase, quest.id);
+  if (!reserved.ok) return reserved.response;
 
-  // Path 1: no proof given. Instant roast, no AI call, no XP.
-  if (!(image instanceof Blob)) {
-    const message = pickProofRoast("no_proof");
+  try {
+    const admin = createAdminClient();
+
+    // Path 1: no proof given. Instant roast, no AI call, no XP.
+    if (!proofImage) {
+      const message = pickProofRoast("no_proof");
+      const { error } = await admin.from("quest_completions").insert({
+        user_id: user.id,
+        quest_id: quest.id,
+        status: "no_proof",
+        xp_awarded: 0,
+        reason: "No proof submitted",
+      });
+      if (error) return NextResponse.json({ error: "Could not save verdict" }, { status: 500 });
+      return NextResponse.json({ verdict: "no_proof", message, xp: 0 });
+    }
+
+    // Path 2: verify in memory. Do not log `proofImage` or this request body.
+    const base64 = Buffer.from(await proofImage.arrayBuffer()).toString("base64");
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) return NextResponse.json({ error: "Verification is not configured" }, { status: 500 });
+
+    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        temperature: 0.7,
+        max_completion_tokens: 300,
+        reasoning_effort: "none",
+        reasoning_format: "hidden",
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: { url: `data:image/jpeg;base64,${base64}` },
+              },
+              { type: "text", text: `Quest: "${quest.name}". Does this image show it was done?` },
+            ],
+          },
+        ],
+      }),
+    });
+
+    if (!aiRes.ok) {
+      // Do not log the request body, it contains the image. The reservation is released below.
+      return NextResponse.json({ error: "Verification failed, try again" }, { status: 502 });
+    }
+
+    const aiJson = await aiRes.json();
+    const text: string = aiJson?.choices?.[0]?.message?.content ?? "";
+
+    let result: { verdict: "yes" | "no" | "unclear"; reason: string; message: string };
+    try {
+      result = JSON.parse(text.replace(/```json|```/g, "").trim());
+    } catch {
+      return NextResponse.json({ error: "Could not read verdict, try again" }, { status: 502 });
+    }
+
+    // "unclear" means retake the photo. Nothing is recorded. The reservation is released below.
+    if (result.verdict === "unclear") {
+      return NextResponse.json({ verdict: "unclear", message: result.message, xp: 0 });
+    }
+
+    const passed = result.verdict === "yes";
+    const xp = passed ? quest.xp_value : 0;
+
     const { error } = await admin.from("quest_completions").insert({
       user_id: user.id,
       quest_id: quest.id,
-      status: "no_proof",
-      xp_awarded: 0,
-      reason: "No proof submitted",
+      status: passed ? "verified" : "rejected",
+      xp_awarded: xp,
+      reason: String(result.reason ?? "").slice(0, 200), // text only, the image is never saved
     });
     if (error) return NextResponse.json({ error: "Could not save verdict" }, { status: 500 });
-    return NextResponse.json({ verdict: "no_proof", message, xp: 0 });
+
+    return NextResponse.json({ verdict: result.verdict, message: result.message, xp });
+  } finally {
+    await releaseProofReservation(reserved.id, user.id);
   }
+}
 
-  if (image.type !== "image/jpeg") {
-    return NextResponse.json({ error: "Send a JPEG" }, { status: 400 });
+async function reserveProofAttempt(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  questId: string,
+): Promise<{ ok: true; id: string } | { ok: false; response: NextResponse }> {
+  const { data, error } = await supabase.rpc("reserve_proof_attempt", { p_quest_id: questId });
+  if (error) {
+    const message = error.message ?? "";
+    if (message.includes("proof in flight")) {
+      return { ok: false, response: NextResponse.json({ error: "A proof check is already running" }, { status: 429 }) };
+    }
+    if (message.includes("daily cap")) {
+      return { ok: false, response: NextResponse.json({ error: "Daily proof limit reached" }, { status: 429 }) };
+    }
+    if (message.includes("quest not found") || message.includes("not authenticated")) {
+      return { ok: false, response: NextResponse.json({ error: "Quest not found" }, { status: 404 }) };
+    }
+    return { ok: false, response: NextResponse.json({ error: "Could not start verification" }, { status: 500 }) };
   }
-  if (image.size > proofConfig.maxBytes) {
-    return NextResponse.json({ error: "Image too large" }, { status: 413 });
+  if (typeof data !== "string" || !data) {
+    return { ok: false, response: NextResponse.json({ error: "Could not start verification" }, { status: 500 }) };
   }
+  return { ok: true, id: data };
+}
 
-  // Path 2: verify in memory. Do not log `image` or this request body.
-  const base64 = Buffer.from(await image.arrayBuffer()).toString("base64");
-
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: "Verification is not configured" }, { status: 500 });
-
-  const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      temperature: 0.7,
-      max_completion_tokens: 300,
-      reasoning_effort: "none",
-      reasoning_format: "hidden",
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: [
-            {
-              type: "image_url",
-              image_url: { url: `data:image/jpeg;base64,${base64}` },
-            },
-            { type: "text", text: `Quest: "${quest.name}". Does this image show it was done?` },
-          ],
-        },
-      ],
-    }),
-  });
-
-  if (!aiRes.ok) {
-    // Do not log the request body, it contains the image
-    return NextResponse.json({ error: "Verification failed, try again" }, { status: 502 });
-  }
-
-  const aiJson = await aiRes.json();
-  const text: string = aiJson?.choices?.[0]?.message?.content ?? "";
-
-  let result: { verdict: "yes" | "no" | "unclear"; reason: string; message: string };
+async function releaseProofReservation(id: string, userId: string) {
   try {
-    result = JSON.parse(text.replace(/```json|```/g, "").trim());
+    const admin = createAdminClient();
+    const { error } = await admin.from("proof_reservations").delete().eq("id", id).eq("user_id", userId);
+    if (error) console.error("proof reservation release failed");
   } catch {
-    return NextResponse.json({ error: "Could not read verdict, try again" }, { status: 502 });
+    console.error("proof reservation release failed");
   }
-
-  // "unclear" means retake the photo. Nothing is recorded.
-  if (result.verdict === "unclear") {
-    return NextResponse.json({ verdict: "unclear", message: result.message, xp: 0 });
-  }
-
-  const passed = result.verdict === "yes";
-  const xp = passed ? quest.xp_value : 0;
-
-  const { error } = await admin.from("quest_completions").insert({
-    user_id: user.id,
-    quest_id: quest.id,
-    status: passed ? "verified" : "rejected",
-    xp_awarded: xp,
-    reason: String(result.reason ?? "").slice(0, 200), // text only, the image is never saved
-  });
-  if (error) return NextResponse.json({ error: "Could not save verdict" }, { status: 500 });
-
-  return NextResponse.json({ verdict: result.verdict, message: result.message, xp });
 }

@@ -2,7 +2,9 @@ import { revalidateTag } from "next/cache";
 import { fetchAniListAnimeList } from "./anilist";
 import {
   anilistAuthEmail,
+  canAdoptServerAniListUser,
   parseAniListIdentity,
+  storedRefreshTimestamp,
   type AniListViewer,
 } from "./anilist-oauth";
 import { cache, CONFIG_VERSION, type WatcherType } from "./config";
@@ -48,16 +50,39 @@ export async function findOrCreateAniListAuthUser(viewer: AniListViewer): Promis
     email,
     email_confirm: true,
     app_metadata: {
+      provider_origin: "anilist",
       anilist_user_id: viewer.id,
       anilist_username: viewer.name,
     },
   });
   if (created.data.user) return created.data.user.id;
+  if (!duplicateAuthUser(created.error)) throw created.error ?? new Error("anilist user create failed");
 
   const { data, error } = await admin.auth.admin.generateLink({ type: "magiclink", email });
   if (error || !data.user) throw error ?? new Error("anilist user lookup failed");
-  await setAniListAppMetadata(data.user.id, viewer);
+  if (!canAdoptServerAniListUser(data.user.app_metadata, viewer.id)) {
+    console.error("AniList sign-in refused: mailbox exists without a server AniList mark", {
+      anilistUserId: viewer.id,
+    });
+    throw new Error("anilist account conflict");
+  }
+
+  const { error: updateError } = await admin.auth.admin.updateUserById(data.user.id, {
+    app_metadata: {
+      ...data.user.app_metadata,
+      provider_origin: "anilist",
+      anilist_user_id: viewer.id,
+      anilist_username: viewer.name,
+    },
+  });
+  if (updateError) throw updateError;
   return data.user.id;
+}
+
+function duplicateAuthUser(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === "email_exists" || error.code === "user_already_exists") return true;
+  return /already (?:been )?registered|already exists/i.test(error.message ?? "");
 }
 
 export async function writeAniListToProfile(userId: string, viewer: AniListViewer): Promise<LinkAniListResult> {
@@ -112,10 +137,17 @@ export async function refreshLinkedCard(
   }
 
   const { data: authData } = await admin.auth.admin.getUserById(userId);
-  const last = authData.user?.user_metadata
-    ? (authData.user.user_metadata as Record<string, unknown>).anilist_refreshed_at
-    : null;
-  if (!options.ignoreCooldown && typeof last === "string") {
+  const appMetadata = { ...(authData.user?.app_metadata ?? {}) };
+  const legacyRefresh = storedRefreshTimestamp(null, authData.user?.user_metadata);
+  if (typeof appMetadata.anilist_refreshed_at !== "string" && legacyRefresh) {
+    appMetadata.anilist_refreshed_at = legacyRefresh;
+    const { error: migrateError } = await admin.auth.admin.updateUserById(userId, {
+      app_metadata: appMetadata,
+    });
+    if (migrateError) throw migrateError;
+  }
+  const last = typeof appMetadata.anilist_refreshed_at === "string" ? appMetadata.anilist_refreshed_at : null;
+  if (!options.ignoreCooldown && last) {
     const elapsed = (Date.now() - Date.parse(last)) / 1000;
     if (Number.isFinite(elapsed) && elapsed < cache.refreshCooldownSeconds) {
       return { ok: false, error: "cooldown" };
@@ -134,8 +166,8 @@ export async function refreshLinkedCard(
 
   const refreshedAt = new Date().toISOString();
   const { error: metaError } = await admin.auth.admin.updateUserById(userId, {
-    user_metadata: {
-      ...(authData.user?.user_metadata ?? {}),
+    app_metadata: {
+      ...appMetadata,
       anilist_refreshed_at: refreshedAt,
     },
   });
