@@ -72,12 +72,13 @@ export function InstallPrompt() {
   }, []);
 
   if (!promptEvent) return null;
+  const event = promptEvent;
 
   async function install() {
     setBusy(true);
     try {
-      await promptEvent.prompt();
-      const choice = await promptEvent.userChoice;
+      await event.prompt();
+      const choice = await event.userChoice;
       if (choice.outcome !== "accepted") rememberDismissal();
       setPromptEvent(null);
     } catch {
