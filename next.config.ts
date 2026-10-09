@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   reactCompiler: true,
+  serverExternalPackages: ["web-push"],
   // Matches cache.wrappedTtlSeconds in lib/config.ts (24 hours).
   cacheLife: {
     wrapped: {

@@ -3,6 +3,7 @@ import {
   applyStreakBonus,
   daysInactiveSince,
   formatTimeLeft,
+  graceResetLabel,
   localCheckinDate,
   minutesUntilDayReset,
   periodStart,
@@ -24,6 +25,14 @@ describe("applyStreakBonus", () => {
   it("awards +25 percent from 30 days", () => {
     expect(applyStreakBonus(20, 30)).toBe(25);
     expect(applyStreakBonus(30, 40)).toBe(38);
+  });
+});
+
+describe("graceResetLabel", () => {
+  it("labels the 3:00 AM grace reset", () => {
+    expect(graceResetLabel(3)).toBe("3:00 AM");
+    expect(graceResetLabel(0)).toBe("12:00 AM");
+    expect(graceResetLabel(15)).toBe("3:00 PM");
   });
 });
 

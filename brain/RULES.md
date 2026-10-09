@@ -32,7 +32,7 @@ If something is not in these files or in the code, it is not decided. Do not fil
 - **Links and sources:** do not invent URLs, docs pages or version numbers.
 
 ## 4. Stay in scope
-- v1 scope is the "Included" list in PRODUCT.md. The "Not in v1" list is off limits: MyAnimeList import, friends and leaderboards, push notifications, native apps, payments, user-uploaded art.
+- v1 scope is the "Included" list in PRODUCT.md. The "Not in v1" list is off limits: MyAnimeList import, friends and leaderboards, notifications other than the streak reminder, native apps, payments, user-uploaded art.
 - Do not add features, screens, settings, routes or tables that are not in the docs. If you think one is needed, propose it and wait.
 - Do not refactor, rename or reformat code unrelated to the task.
 - Build the card first, then the quest tracker (see CLAUDE.md).

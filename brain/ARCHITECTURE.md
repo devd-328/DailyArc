@@ -118,6 +118,18 @@ Unique on (user_id, local_date).
 - One row per user per local day. The row is created the first time the user opens the day, by the server, so a refresh shows the same quest.
 - `base_xp` is copied from the template when the row is created.
 
+### push_subscriptions
+id, user_id, endpoint (unique), p256dh, auth, created_at
+- One row per browser or installed app. Written by `POST /api/push/subscribe` with the service role, after the signed-in user is known. The client never sends a user id.
+- `endpoint` must be an Apple, Google or Mozilla push host (`web.push.apple.com` and other `*.push.apple.com` hosts, `fcm.googleapis.com`, `updates.push.services.mozilla.com`, `push.services.mozilla.com`). The route rejects anything else so the cron cannot be pointed at an arbitrary URL.
+- Signed-in users can read and delete their own rows. They cannot insert. Deleting the profile removes the rows.
+
+### push_sends
+user_id, local_day (date), kind (`streak_at_risk`), created_at
+Primary key (user_id, local_day, kind).
+- One reminder per user per local quest day. The cron inserts the row before it sends. A temporary push failure deletes that row so the next hour can retry. A dead subscription (push service 404 or 410) is deleted from `push_subscriptions` and the send row stays, so that day is not retried.
+- Signed-in users can read and delete their own rows. Inserts are service-role only.
+
 ### events
 id, name (`wrapped_generated`, `card_exported`, `sign_in_started`, `sign_in_completed`, `anilist_linked`, `quest_created`, `quest_checkin`, `starter_quest_added`, `side_quest_rerolled`, `side_quest_completed`), anilist_username (nullable), user_id (nullable), props (jsonb), created_at
 Used for the success metrics. Insert only, through the server.
@@ -132,6 +144,7 @@ Used for the success metrics. Insert only, through the server.
 - Users can insert and update their own quests (name, stat, xp_value, cadence, active). They cannot touch XP, streak, level or watcher type columns.
 - Clients have no insert or update access to `checkins`, `quest_completions`, `stats` or any XP or streak column. Check-ins change only through `check_in()`. Proof rows are inserted by the service role.
 - Users can read `quest_templates` and their own `side_quests`. They cannot write to either. Side quests change only through server functions.
+- Users can read and delete their own `push_subscriptions` and `push_sends`. They cannot insert either. Subscriptions are saved by the subscribe route with the service role. Send rows are written by the reminder cron.
 - `public_profiles` is the only thing readable without auth.
 
 ## Check-in flow
@@ -194,7 +207,7 @@ GET    /rank-up                   rank-up still after a check-in that crosses a 
 GET    /quests                    quest board (auth)
 GET    /stats                     stat screen (auth)
 GET    /cards                     own card, or the link AniList empty state (auth)
-GET    /profile                   own account, AniList link, public page switch, settings (auth)
+GET    /profile                   own account, AniList link, public page switch, settings, streak reminder (auth)
 POST   /api/quests                create or update a quest (auth)
 POST   /api/checkins              check in (auth)
 POST   /api/verify-proof          judge a proof photo, store the verdict only (auth)
@@ -206,6 +219,9 @@ POST   /api/side-quest/complete   complete today's side quest (auth, v1.1)
 PATCH  /api/profile               update username, timezone, is_public (auth)
 POST   /api/profile/refresh-card  refresh own card data, cooldown applies (auth)
 DELETE /api/profile               delete profile, auth user and all related data (auth)
+POST   /api/push/subscribe        save this browser's push subscription (auth)
+DELETE /api/push/subscribe        remove this browser's push subscription (auth)
+GET    /api/cron/streak-reminders send due streak reminders (CRON_SECRET bearer)
 POST   /api/events                record a share or export event
 ```
 
@@ -223,4 +239,11 @@ POST   /api/events                record a share or export event
 - A DailyArc `username` (public name) has the same character rules and must be unique. Reserved names (for example `api`, `login`, `u`, `wrapped`) are rejected, because they clash with routes.
 - Rate limit `/api/wrapped`, `/api/card` and `/api/events` per IP, because they trigger upstream calls and image rendering.
 - Never return internal ids from public endpoints.
-- Deleting a profile removes its quests, check-ins, stats, events and its auth user, and clears its cache entries.
+- Deleting a profile removes its quests, check-ins, stats, events, push subscriptions, reminder rows and its auth user, and clears its cache entries.
+
+## Streak reminders
+`GET /api/cron/streak-reminders` runs every hour (`0 * * * *` in `vercel.json`). The request must send `Authorization: Bearer <CRON_SECRET>`. Vercel sends that header when `CRON_SECRET` is set. A once-a-day cron cannot cover every timezone's window before 3:00 AM, and Vercel Hobby only allows a daily cron, so hourly needs a plan that allows it or another hourly caller of the same route.
+
+The route loads profiles with `current_streak > 0` that have a push subscription. It keeps a user when `minutesUntilDayReset` is inside `streaks.reminderWindowMinutes` (120) and `last_checkin_date` is before today's `localCheckinDate`. It sends one Web Push per user for that local day. The payload opens `/quests`. VAPID keys are `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` (`mailto:` or `https:`).
+
+The profile screen asks for notification permission and stores the subscription. iPhone and iPad only deliver the alert after the app is installed to the home screen.

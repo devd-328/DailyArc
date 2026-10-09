@@ -58,6 +58,11 @@ export const streaks = {
   ],
   /** A check-in before this local hour counts for the previous day. */
   graceHour: 3,
+  /**
+   * Minutes before the local reset when the closed-app streak reminder can send.
+   * Wider than one hour so the hourly cron does not skip a timezone.
+   */
+  reminderWindowMinutes: 120,
 } as const;
 
 export const quests = {

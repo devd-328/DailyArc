@@ -53,3 +53,42 @@ async function networkFirstQuests(request) {
     });
   }
 }
+
+self.addEventListener("push", (event) => {
+  let title = "DailyArc";
+  let body = "Check in before your streak resets.";
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      if (typeof payload.title === "string" && payload.title) title = payload.title;
+      if (typeof payload.body === "string" && payload.body) body = payload.body;
+    } catch {
+      // Keep the fallback copy when the payload is not JSON.
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: "/icons/icon-192.png",
+      data: { url: "/quests" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL("/quests", self.location.origin).href;
+  event.waitUntil(
+    (async () => {
+      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of clients) {
+        if (new URL(client.url).origin !== self.location.origin) continue;
+        if (typeof client.navigate === "function") await client.navigate(target);
+        await client.focus();
+        return;
+      }
+      await self.clients.openWindow(target);
+    })(),
+  );
+});

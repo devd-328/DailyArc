@@ -15,11 +15,11 @@ Included:
 - Stat screen with 5 stats
 - Public profile link that shows card and rank
 - Accounts: one screen to sign in or sign up with AniList, Google or email
-- Profile tab: account, AniList link, public page switch, settings
+- Profile tab: account, AniList link, public page switch, settings, streak reminder switch
 - Shareable card image exports (9:16 and 1:1) and an Open Graph preview image for profile links
 
 Not in v1:
-- MyAnimeList import, friends and leaderboards, push notifications, native apps, payments, user-uploaded art
+- MyAnimeList import, friends and leaderboards, notifications other than the streak reminder, native apps, payments, user-uploaded art
 - Daily side quest (random optional quest). Planned for v1.1, see "Starter quests and side quests"
 
 ## Anime Wrapped stats
@@ -60,6 +60,12 @@ Thresholds are starting values and live in config so they can be tuned without c
 - Ranks by level: E 1 to 9, D 10 to 19, C 20 to 29, B 30 to 39, A 40 to 49, S 50
 - Streak bonus: +10 percent XP at 7 day streak, +25 percent at 30 days
 - Missed day: streak resets, no XP loss (keep it motivating, not punishing)
+
+### Streak reminder
+- Opt in from the profile screen. Off until the user allows notifications.
+- One alert per local day, only when the daily streak is above 0 and there is no check-in for the current quest day.
+- Sent in the 120 minutes before the 3:00 AM local reset. An hourly job sends it. The app does not need to be open.
+- iPhone and iPad receive it only after DailyArc is added to the home screen. Android can allow it in the browser.
 
 ### Pacing (assumes about 70 XP per day: 3 daily quests at 20 XP plus streak bonus)
 | Level | Total XP | Approx. time |

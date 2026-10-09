@@ -26,7 +26,7 @@ This Next.js version is newer than most model knowledge. Before writing Next.js 
 Not installed yet:
 - Hosting: Vercel
 
-Env (see `.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANILIST_CLIENT_ID`, `ANILIST_CLIENT_SECRET`, `ANILIST_REDIRECT_URI`. Register the redirect URI on the AniList app. It must match exactly.
+Env (see `.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANILIST_CLIENT_ID`, `ANILIST_CLIENT_SECRET`, `ANILIST_REDIRECT_URI`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`. Register the redirect URI on the AniList app. It must match exactly. `VAPID_SUBJECT` is a `mailto:` or `https:` contact for the push service.
 
 ## Working rules
 - Ship the smallest version that can be shown to a friend.

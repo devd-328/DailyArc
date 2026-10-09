@@ -77,6 +77,16 @@ export function localCheckinDate(now: Date, timeZone: string): string {
  * Period key for a check-in. Daily is the local date itself.
  * Weekly is the Monday of that week (ISO week, Monday start).
  */
+/** Clock label for the local reset. 3 becomes "3:00 AM". */
+export function graceResetLabel(hour: number = streaks.graceHour): string {
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23) {
+    throw new RangeError(`grace hour must be 0 to 23, got ${hour}`);
+  }
+  const hour12 = hour % 12 || 12;
+  const suffix = hour < 12 ? "AM" : "PM";
+  return `${hour12}:00 ${suffix}`;
+}
+
 /** Minutes until the 3:00 AM local grace reset. */
 export function minutesUntilDayReset(now: Date, timeZone: string): number {
   const fmt = new Intl.DateTimeFormat("en-US", {

@@ -3,6 +3,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { DeleteAccount } from "@/components/DeleteAccount";
 import { PublicSwitch } from "@/components/PublicSwitch";
 import { RankBadge } from "@/components/RankBadge";
+import { StreakReminderSwitch } from "@/components/StreakReminderSwitch";
 import { RefreshCardButton } from "@/components/RefreshCardButton";
 import { authErrorMessage, displayAccountEmail, refreshedAgoLabel, storedRefreshTimestamp } from "@/lib/anilist-oauth";
 import { resolveAvatar } from "@/lib/avatar";
@@ -125,6 +126,14 @@ async function ProfileBody({ searchParams }: { searchParams: PageProps<"/profile
           <small className="text-sm font-medium text-ink-soft">{displayAccountEmail(user.email)}</small>
         </div>
       </div>
+
+      <h2 className="mt-3 mb-1.5 text-sm font-bold text-ink-soft">Reminders</h2>
+      <div className="rounded-card border-2 border-ink bg-card shadow-row">
+        <StreakReminderSwitch vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || null} />
+      </div>
+      <p className="mt-1.5 text-[13px] font-medium text-ink-soft">
+        On iPhone and iPad, add DailyArc to your home screen first. Android can allow this in the browser.
+      </p>
 
       <form action="/auth/signout" method="post">
         <button

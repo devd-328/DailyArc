@@ -11,6 +11,10 @@ describe("config", () => {
     }
   });
 
+  it("keeps the reminder window wider than the hourly cron", () => {
+    expect(streaks.reminderWindowMinutes).toBeGreaterThan(60);
+  });
+
   it("lists streak bonuses from the highest threshold to the lowest", () => {
     const days = streaks.bonuses.map((b) => b.minDays);
     expect([...days].sort((a, b) => b - a)).toEqual(days);
