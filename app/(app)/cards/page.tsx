@@ -37,27 +37,15 @@ async function CardsBody({ searchParams }: { searchParams: PageProps<"/cards">["
             {linkError}
           </p>
         ) : null}
-        <div className="mx-auto flex w-full max-w-sm flex-col items-center">
-          <div
-            className="grid place-items-center rounded-card border-2 border-dashed border-ink-soft bg-card/60"
-            style={{ width: 190, height: 338, transform: "rotate(-3deg)" }}
-          >
-            <span className="font-display text-[64px] text-ink-soft">?</span>
-          </div>
-          <h2 className="mt-[30px] text-center font-display text-[22px]">No card yet</h2>
-          <p className="mx-auto mt-2 max-w-[270px] text-center text-[15px] font-medium leading-normal">
-            Link AniList if you want the watcher card. Skip it if you are here for quests.
-          </p>
-          <a
-            href="/auth/anilist?next=/cards"
-            className="mt-[22px] flex min-h-12 w-full items-center justify-center rounded-btn border-2 border-ink bg-pink text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed"
-          >
-            Link AniList
-          </a>
-          <p className="mt-2 text-center text-[13px] font-medium text-ink-soft">
-            Your quests and rank keep working without it.
-          </p>
-        </div>
+        <p className="max-w-sm text-[15px] font-medium leading-normal">
+          Quests, XP, and rank work without a card.
+        </p>
+        <a
+          href="/auth/anilist?next=/cards"
+          className="mt-4 inline-flex min-h-12 items-center justify-center rounded-btn border-2 border-ink bg-card px-4 text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed"
+        >
+          Create card
+        </a>
       </>
     );
   }
