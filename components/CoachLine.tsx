@@ -3,7 +3,7 @@ import type { CoachTone } from "@/lib/coach";
 export function CoachLine({
   line,
   tone,
-  label = "Today's roast",
+  label = "Today's reflection",
 }: {
   line: string;
   tone: CoachTone;
