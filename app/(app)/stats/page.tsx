@@ -31,12 +31,7 @@ async function StatsBody() {
   return (
     <div className="app-split">
     <div className="min-w-0">
-      <header className="relative mb-4">
-        <h1 className="pr-36 font-display text-[32px]">Stats</h1>
-        <div className="absolute top-0 right-0 rotate-[3deg] border-2 border-ink bg-sun px-3 py-1.5 text-sm font-bold shadow-row">
-          Streak: {profile.current_streak} days
-        </div>
-      </header>
+      <h1 className="mb-4 font-display text-[32px]">Stats</h1>
 
       <section className="rounded-card border-2 border-ink bg-card px-3.5 py-4 shadow-panel">
         <div className="flex gap-4">

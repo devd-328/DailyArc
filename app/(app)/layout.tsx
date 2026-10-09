@@ -1,3 +1,4 @@
+import { AppHeader, AppHeaderFallback } from "@/components/AppHeader";
 import { TabBar } from "@/components/TabBar";
 import { requireProfile } from "@/lib/profile";
 import { requireUser } from "@/lib/supabase/session";
@@ -16,10 +17,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
 async function AppShell({ children }: { children: ReactNode }) {
   const user = await requireUser();
-  await requireProfile(user.id);
+  const profile = await requireProfile(user.id);
   return (
     <div className="app-shell halftone relative min-h-dvh overflow-x-clip">
-      <div className="page-gutter app-main mx-auto w-full">{children}</div>
+      <div className="page-gutter app-main mx-auto w-full">
+        <AppHeader username={profile.username} streakDays={profile.current_streak} />
+        {children}
+      </div>
       <TabBar />
     </div>
   );
@@ -28,7 +32,9 @@ async function AppShell({ children }: { children: ReactNode }) {
 function AppShellFallback() {
   return (
     <div className="app-shell halftone relative min-h-dvh overflow-x-clip">
-      <div className="page-gutter app-main mx-auto w-full" />
+      <div className="page-gutter app-main mx-auto w-full">
+        <AppHeaderFallback />
+      </div>
     </div>
   );
 }

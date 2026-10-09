@@ -92,4 +92,15 @@ describe("ROAST_COPY", () => {
       }
     }
   });
+
+  it("calls the user by name in every live roast", () => {
+    for (const trigger of ROAST_TRIGGERS) {
+      for (const line of ROAST_COPY[trigger]) {
+        expect(line).toContain("{name}");
+      }
+      const result = roastLine(sample(), trigger);
+      expect(result.line).toContain("mira_k");
+      expect(result.line.includes("{name}")).toBe(false);
+    }
+  });
 });

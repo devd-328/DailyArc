@@ -2,9 +2,11 @@
 // Nothing is written to Supabase Storage, disk, or logs.
 
 import { proof as proofConfig } from "@/lib/config";
+import { getProfile } from "@/lib/profile";
 import { pickProofRoast } from "@/lib/proof-roasts";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isDailyArcUsername } from "@/lib/username";
 import { NextResponse } from "next/server";
 
 const MODEL = process.env.PROOF_MODEL ?? "qwen/qwen3.8-27b";
@@ -60,6 +62,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Quest not found" }, { status: 404 });
   }
 
+  const profile = await getProfile(user.id);
+  const name = profile?.username && isDailyArcUsername(profile.username) ? profile.username : "hero";
+
   let proofImage: Blob | null = null;
   if (image instanceof Blob) {
     if (image.type !== "image/jpeg") {
@@ -82,7 +87,7 @@ export async function POST(req: Request) {
 
     // Path 1: no proof given. Instant roast, no AI call, no XP.
     if (!proofImage) {
-      const message = pickProofRoast("no_proof");
+      const message = pickProofRoast("no_proof", name);
       const { error } = await admin.from("quest_completions").insert({
         user_id: user.id,
         quest_id: quest.id,
@@ -150,6 +155,7 @@ export async function POST(req: Request) {
 
     const passed = result.verdict === "yes";
     const xp = passed ? quest.xp_value : 0;
+    const message = passed ? result.message : pickProofRoast("fake_proof", name);
 
     const { error } = await admin.from("quest_completions").insert({
       user_id: user.id,
@@ -160,7 +166,7 @@ export async function POST(req: Request) {
     });
     if (error) return NextResponse.json({ error: "Could not save verdict" }, { status: 500 });
 
-    return NextResponse.json({ verdict: result.verdict, message: result.message, xp });
+    return NextResponse.json({ verdict: result.verdict, message, xp });
   } finally {
     await releaseProofReservation(reserved.id, user.id);
   }

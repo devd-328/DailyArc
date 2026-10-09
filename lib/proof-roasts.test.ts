@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { PROOF_ROASTS, pickProofRoast, type ProofRoastCategory } from "./proof-roasts";
+import {
+  PROOF_ROASTS,
+  fillProofRoast,
+  pickProofRoast,
+  type ProofRoastCategory,
+} from "./proof-roasts";
 
 const CATEGORIES = Object.keys(PROOF_ROASTS) as ProofRoastCategory[];
+const NAMED = ["no_proof", "fake_proof"] as const;
 
 describe("PROOF_ROASTS", () => {
   it("keeps ten short lines in every category", () => {
@@ -17,8 +23,20 @@ describe("PROOF_ROASTS", () => {
     }
   });
 
-  it("picks a line from the requested category", () => {
-    const line = pickProofRoast("no_proof");
-    expect(PROOF_ROASTS.no_proof).toContain(line);
+  it("calls the user by name on missing and fake proof", () => {
+    for (const category of NAMED) {
+      for (const line of PROOF_ROASTS[category]) {
+        expect(line).toContain("{name}");
+        const filled = fillProofRoast(line, "mira_k");
+        expect(filled).toContain("mira_k");
+        expect(filled.includes("{name}")).toBe(false);
+      }
+    }
+  });
+
+  it("picks a filled line from the requested category", () => {
+    const line = pickProofRoast("fake_proof", "devdas");
+    expect(line).toContain("devdas");
+    expect(PROOF_ROASTS.fake_proof.map((item) => fillProofRoast(item, "devdas"))).toContain(line);
   });
 });

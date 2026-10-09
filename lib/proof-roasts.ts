@@ -1,32 +1,32 @@
 /**
  * Instant proof roasts. No model call.
- * Photo rejections still come from the vision model.
+ * Fake and missing-proof fails use this pool, filled with the username.
  * Gentle lines are for a hard day. Nothing auto-selects them yet.
  */
 export const PROOF_ROASTS = {
   no_proof: [
-    "No proof? I didn't trust my ex either, so why would I trust you?",
-    "You say it is done. The camera has not heard about it.",
-    "Trust issues on. A story without a photo is just a story.",
-    "That is a bold claim for someone holding zero evidence.",
-    "Bro thought \"trust me\" was a file format.",
-    "Official update: the quest stays open until a photo arrives.",
-    "Your excuse made it. Your proof missed the meeting.",
-    "Where is the picture? I do not grade speeches.",
-    "Empty hands, full confidence. Pick one.",
-    "I believe results. You sent a sentence.",
+    "No proof, {name}? I didn't trust my ex either, so why would I trust you?",
+    "You say it is done, {name}. The camera has not heard about it.",
+    "Trust issues on, {name}. A story without a photo is just a story.",
+    "That is a bold claim, {name}, for someone holding zero evidence.",
+    "Bro thought \"trust me\" was a file format, {name}.",
+    "Official update, {name}: the quest stays open until a photo arrives.",
+    "Your excuse made it, {name}. Your proof missed the meeting.",
+    "Where is the picture, {name}? I do not grade speeches.",
+    "Empty hands, full confidence, {name}. Pick one.",
+    "I believe results, {name}. You sent a sentence.",
   ],
   fake_proof: [
-    "A photo of a wall? The quest still does not know you.",
-    "Nice try. My trust issues just picked up a new episode.",
-    "That picture and this quest have never met.",
-    "You sent a memory from a completely different afternoon.",
-    "Random screenshot detected. The quest is still waiting.",
-    "Blurry nothing does not count as a finished habit.",
-    "If this photo did the quest, you can stay seated.",
-    "Close, if the quest was just \"own a camera.\"",
-    "I asked for proof. You sent a vibe.",
-    "This image called. It does not know the quest either.",
+    "A photo of a wall, {name}? The quest still does not know you.",
+    "Nice try, {name}. My trust issues just picked up a new episode.",
+    "That picture and this quest have never met, {name}.",
+    "You sent a memory from a different afternoon, {name}.",
+    "Random screenshot, {name}. The quest is still waiting.",
+    "Blurry nothing is not a finished habit, {name}.",
+    "If this photo did the quest, {name}, you can stay seated.",
+    "Close, {name}, if the quest was just \"own a camera.\"",
+    "I asked for proof, {name}. You sent a vibe.",
+    "This image called, {name}. It does not know the quest either.",
   ],
   skipped: [
     "The quest waited. You did not.",
@@ -80,7 +80,11 @@ export const PROOF_ROASTS = {
 
 export type ProofRoastCategory = keyof typeof PROOF_ROASTS;
 
-export function pickProofRoast(category: ProofRoastCategory): string {
+export function fillProofRoast(line: string, name: string): string {
+  return line.replaceAll("{name}", name);
+}
+
+export function pickProofRoast(category: ProofRoastCategory, name: string): string {
   const lines = PROOF_ROASTS[category];
-  return lines[Math.floor(Math.random() * lines.length)];
+  return fillProofRoast(lines[Math.floor(Math.random() * lines.length)], name);
 }

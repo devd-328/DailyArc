@@ -44,15 +44,6 @@ async function QuestsBody() {
   return (
     <div className="app-split">
       <div className="min-w-0">
-        <header className="mb-[18px] flex items-center justify-between">
-          <div className="-rotate-2 border-2 border-ink bg-sun px-3.5 py-1.5 text-[15px] font-bold shadow-row">
-            {profile.username}
-          </div>
-          <div className="rounded-chip border-2 border-ink bg-card px-3.5 py-1.5 text-sm font-bold">
-            Streak: {profile.current_streak} days
-          </div>
-        </header>
-
         <section className="flex items-center gap-4 rounded-card border-2 border-ink bg-card p-4 shadow-panel">
           <RankBadge rank={progress.rank} size={76} />
           <div className="min-w-0 flex-1">
