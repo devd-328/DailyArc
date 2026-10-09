@@ -44,6 +44,9 @@ export function ProofSheet({
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [cameraAttempt, setCameraAttempt] = useState(0);
+  const [facing, setFacing] = useState<CameraFacing>("environment");
+  const [showCameraChoice, setShowCameraChoice] = useState(false);
+  const facingChoiceRef = useRef(false);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [message, setMessage] = useState("");
   const [checkIn, setCheckIn] = useState<CheckInResult | null>(null);
@@ -80,17 +83,23 @@ export function ProofSheet({
     async function openCamera() {
       setCameraReady(false);
       setCameraError(null);
+      const phoneLike = window.matchMedia("(pointer: coarse)").matches;
+      if (phoneLike) setShowCameraChoice(true);
       if (!navigator.mediaDevices?.getUserMedia) {
         setCameraError("This browser cannot open a live camera.");
         return;
       }
+      stopStream(streamRef.current);
+      streamRef.current = null;
       try {
-        const stream = await openLiveCamera();
+        const stream = await openLiveCamera(facing, facingChoiceRef.current);
         if (cancelled) {
           stopStream(stream);
           return;
         }
         streamRef.current = stream;
+        const cameras = await listCameras();
+        if (!cancelled) setShowCameraChoice(cameras.length > 1 || phoneLike);
         if (video) {
           video.srcObject = stream;
           await video.play();
@@ -98,19 +107,30 @@ export function ProofSheet({
         if (!cancelled) setCameraReady(true);
       } catch {
         if (!cancelled) {
-          setCameraError("The camera is blocked or missing. A saved photo does not count.");
+          setCameraError(
+            facing === "user"
+              ? "The selfie camera is blocked or missing. A saved photo does not count."
+              : "The back camera is blocked or missing. A saved photo does not count.",
+          );
         }
       }
     }
 
-    void openCamera();
+    void takeCameraTurn(openCamera);
     return () => {
       cancelled = true;
       stopStream(streamRef.current);
       streamRef.current = null;
       if (video) video.srcObject = null;
     };
-  }, [phase, cameraAttempt]);
+  }, [phase, cameraAttempt, facing]);
+
+  function chooseFacing(next: CameraFacing) {
+    if (next === facing || phase !== "ask") return;
+    facingChoiceRef.current = true;
+    setCameraError(null);
+    setFacing(next);
+  }
 
   function tryAgain() {
     setPhase("ask");
@@ -309,7 +329,14 @@ export function ProofSheet({
         {phase === "ask" ? (
           <>
             <div className="relative mt-4 aspect-[4/3] overflow-hidden rounded-card border-2 border-ink bg-ink">
-              <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="h-full w-full object-cover"
+                style={facing === "user" ? { transform: "scaleX(-1)" } : undefined}
+              />
               {cameraError ? (
                 <p className="absolute inset-0 grid place-items-center px-4 text-center text-[13px] font-bold text-card">
                   {cameraError}
@@ -321,11 +348,31 @@ export function ProofSheet({
                 </p>
               ) : null}
             </div>
+            {showCameraChoice ? (
+              <div className="mt-4 grid grid-cols-2 gap-2" role="group" aria-label="Camera">
+                <button
+                  type="button"
+                  aria-pressed={facing === "user"}
+                  onClick={() => chooseFacing("user")}
+                  className={cameraChoiceClass(facing === "user")}
+                >
+                  Selfie
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={facing === "environment"}
+                  onClick={() => chooseFacing("environment")}
+                  className={cameraChoiceClass(facing === "environment")}
+                >
+                  Back camera
+                </button>
+              </div>
+            ) : null}
             {cameraError ? (
               <button
                 type="button"
                 onClick={() => setCameraAttempt((current) => current + 1)}
-                className="mt-4 flex min-h-12 w-full items-center justify-center rounded-btn border-2 border-ink bg-card text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed"
+                className={`${showCameraChoice ? "mt-3" : "mt-4"} flex min-h-12 w-full items-center justify-center rounded-btn border-2 border-ink bg-card text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed`}
               >
                 Try the camera again
               </button>
@@ -334,7 +381,7 @@ export function ProofSheet({
                 type="button"
                 disabled={!cameraReady}
                 onClick={() => void snap()}
-                className="mt-4 flex min-h-12 w-full items-center justify-center rounded-btn border-2 border-ink bg-pink text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed disabled:opacity-60"
+                className={`${showCameraChoice ? "mt-3" : "mt-4"} flex min-h-12 w-full items-center justify-center rounded-btn border-2 border-ink bg-pink text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed disabled:opacity-60`}
               >
                 Snap
               </button>
@@ -423,15 +470,59 @@ function parseVerdict(data: unknown): { verdict: Verdict; message: string } | nu
   return { verdict, message: row.message.trim() };
 }
 
-async function openLiveCamera(): Promise<MediaStream> {
+type CameraFacing = "user" | "environment";
+
+function cameraChoiceClass(selected: boolean) {
+  return `flex min-h-12 items-center justify-center rounded-btn border-2 border-ink text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed ${
+    selected ? "bg-sun" : "bg-card"
+  }`;
+}
+
+async function listCameras(): Promise<MediaDeviceInfo[]> {
+  if (!navigator.mediaDevices?.enumerateDevices) return [];
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  return devices.filter((device) => device.kind === "videoinput");
+}
+
+async function openLiveCamera(facing: CameraFacing, exact: boolean): Promise<MediaStream> {
+  const cameras = exact ? await listCameras() : [];
+  const deviceId = pickCameraId(cameras, facing);
+  const video: MediaTrackConstraints = deviceId
+    ? { deviceId: { exact: deviceId } }
+    : { facingMode: exact ? { exact: facing } : { ideal: facing } };
   try {
-    return await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: { facingMode: { ideal: "environment" } },
-    });
-  } catch {
+    return await navigator.mediaDevices.getUserMedia({ audio: false, video });
+  } catch (error) {
+    if (exact) throw error;
     return navigator.mediaDevices.getUserMedia({ audio: false, video: true });
   }
+}
+
+let cameraTurn: Promise<void> = Promise.resolve();
+
+function takeCameraTurn(task: () => Promise<void>): Promise<void> {
+  const run = cameraTurn.then(task, task);
+  cameraTurn = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
+function pickCameraId(cameras: MediaDeviceInfo[], facing: CameraFacing): string | undefined {
+  const ranked = cameras
+    .filter((camera) => camera.deviceId && camera.label)
+    .map((camera) => ({ id: camera.deviceId, score: cameraScore(camera.label, facing) }))
+    .filter((camera) => camera.score > 0)
+    .sort((left, right) => right.score - left.score);
+  return ranked[0]?.id;
+}
+
+function cameraScore(label: string, facing: CameraFacing): number {
+  const front = /front|user|selfie|facetime/i.test(label);
+  const back = /back|rear|environment/i.test(label);
+  if (facing === "user" ? !front || back : !back || front) return 0;
+  return /ultra|tele|depth|mono|wide/i.test(label) ? 1 : 2;
 }
 
 function stopStream(stream: MediaStream | null) {
