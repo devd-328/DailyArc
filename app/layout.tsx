@@ -1,4 +1,5 @@
 import { Analytics } from "@vercel/analytics/next";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import type { Metadata, Viewport } from "next";
 import { Dela_Gothic_One, Zen_Kaku_Gothic_New } from "next/font/google";
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${dela.variable} ${zen.variable} ${sfx.variable}`}>
       <body className="min-h-dvh bg-paper font-sans text-ink antialiased">
         <ServiceWorkerRegister />
+        <InstallPrompt />
         {children}
         <Analytics />
       </body>
