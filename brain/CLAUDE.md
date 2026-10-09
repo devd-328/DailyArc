@@ -61,7 +61,7 @@ Tests sit next to the code they test (for example lib/config.test.ts).
 
 ## Setup status
 Done: Next.js scaffold, Tailwind with design tokens, fonts (Dela Gothic One, Zen Kaku Gothic New, katakana subset), Vitest, `lib/config.ts`, the pure functions listed under /lib (with unit tests), the public landing screen, AniList fetch, `GET /api/wrapped/[username]`, the Wrapped result page, card image export, `/login` with Google, email magic link and AniList OAuth, `/onboarding`, the signed-in tabs `/quests`, `/stats`, `/cards`, `/profile`, public `/u/[username]`, and `/rank-up` after a check-in that crosses a rank. Quests, public profiles and AniList linking need the SQL in `supabase/migrations` applied to the Supabase project, plus AniList and service-role env vars.
-Not done yet: owner-approved extra starter/side quest copy (v1 ships the 5 names from the quests mockup in `lib/quest-templates.ts`), account deletion, and IP rate limiting on public APIs.
+Not done yet: owner-approved extra starter/side quest copy (v1 ships the 5 names from the quests mockup in `lib/quest-templates.ts`) and IP rate limiting on public APIs. Account deletion is `DELETE /api/profile` from the profile screen.
 Dark mode is not implemented (light first).
 
 ## Definition of done

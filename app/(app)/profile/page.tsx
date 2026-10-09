@@ -1,5 +1,6 @@
 import { AvatarEditor } from "@/components/AvatarEditor";
 import { CopyButton } from "@/components/CopyButton";
+import { DeleteAccount } from "@/components/DeleteAccount";
 import { PublicSwitch } from "@/components/PublicSwitch";
 import { RankBadge } from "@/components/RankBadge";
 import { RefreshCardButton } from "@/components/RefreshCardButton";
@@ -133,7 +134,7 @@ async function ProfileBody({ searchParams }: { searchParams: PageProps<"/profile
           Sign out
         </button>
       </form>
-      <p className="mt-3 text-center text-sm font-bold text-danger">Delete account and data</p>
+      <DeleteAccount />
     </div>
   );
 }
