@@ -3,24 +3,35 @@
 import { crossedRankBoundary, parseCheckInResult, type CheckInResult } from "@/lib/checkin";
 import { proof } from "@/lib/config";
 import type { Rank } from "@/lib/config";
+import { queueNeedsCheckIn, queuePendingProof } from "@/lib/offline-checkins";
 import { compressProof } from "@/lib/proof-image";
 import { useScrollLock } from "@/lib/use-scroll-lock";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-type Phase = "ask" | "checking" | "verdict" | "reward";
+type Phase = "ask" | "checking" | "verdict" | "reward" | "queued";
 
 type Verdict = "yes" | "no" | "unclear" | "no_proof";
+
+export type ProofSettlement =
+  | { type: "saved"; result: CheckInResult }
+  | { type: "rejected"; message: string };
 
 export function ProofSheet({
   questId,
   questName,
   rank,
+  timezone,
+  settled,
+  onQueued,
   onClose,
 }: {
   questId: string;
   questName: string;
   rank: Rank;
+  timezone: string;
+  settled?: ProofSettlement | null;
+  onQueued?: () => void;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -41,8 +52,25 @@ export function ProofSheet({
   function close() {
     closedRef.current = true;
     onClose();
+    if (phase === "queued" || saveFailed) return;
     router.refresh();
   }
+
+  useEffect(() => {
+    if (!settled) return;
+    if (settled.type === "saved") {
+      setCheckIn(settled.result);
+      setVerdict("yes");
+      setSaveFailed(false);
+      setMessage("");
+      setPhase("reward");
+      return;
+    }
+    setVerdict("no");
+    setMessage(settled.message);
+    setSaveFailed(false);
+    setPhase("verdict");
+  }, [settled]);
 
   useEffect(() => {
     if (phase !== "ask") return;
@@ -151,10 +179,16 @@ export function ProofSheet({
     try {
       response = await fetch("/api/verify-proof", { method: "POST", body: form });
     } catch {
-      if (closedRef.current) return;
-      setVerdict("unclear");
-      setMessage("Could not reach the quest master. Try again.");
-      setPhase("verdict");
+      try {
+        await queuePendingProof({ questId, questName, timeZone: timezone, photo: image });
+        onQueued?.();
+        if (!closedRef.current) setPhase("queued");
+      } catch {
+        if (closedRef.current) return;
+        setVerdict("unclear");
+        setMessage("Could not reach the quest master. Try again.");
+        setPhase("verdict");
+      }
       return;
     }
     if (closedRef.current) return;
@@ -190,8 +224,14 @@ export function ProofSheet({
     }
 
     const saved = await saveCheckIn(questId);
-    if (closedRef.current) return;
     if (!saved) {
+      try {
+        await queueNeedsCheckIn({ questId, questName, timeZone: timezone });
+        onQueued?.();
+      } catch {
+        // The reward screen still offers a retry.
+      }
+      if (closedRef.current) return;
       setSaveFailed(true);
       setPhase("reward");
       return;
@@ -214,8 +254,14 @@ export function ProofSheet({
     setPhase("checking");
     setMessage("Saving your XP...");
     const saved = await saveCheckIn(questId);
-    if (closedRef.current) return;
     if (!saved) {
+      try {
+        await queueNeedsCheckIn({ questId, questName, timeZone: timezone });
+        onQueued?.();
+      } catch {
+        // The reward screen still offers a retry.
+      }
+      if (closedRef.current) return;
       setSaveFailed(true);
       setMessage("Proof counted, but the XP did not save. Try again.");
       setPhase("reward");
@@ -249,13 +295,16 @@ export function ProofSheet({
           </button>
         </div>
         <p className="text-base font-bold leading-tight">{questName}</p>
-        <p className="mt-2 text-[13px] font-medium leading-snug text-ink-soft">
-          Your proof is checked and deleted instantly. We never save your photos.
-        </p>
-
-        <p className="mt-2 text-[13px] font-medium leading-snug text-ink-soft">
-          Live camera only. A saved photo does not count.
-        </p>
+        {phase === "queued" ? null : (
+          <>
+            <p className="mt-2 text-[13px] font-medium leading-snug text-ink-soft">
+              Your proof is checked and deleted instantly. We never save your photos.
+            </p>
+            <p className="mt-2 text-[13px] font-medium leading-snug text-ink-soft">
+              Live camera only. A saved photo does not count.
+            </p>
+          </>
+        )}
 
         {phase === "ask" ? (
           <>
@@ -299,6 +348,15 @@ export function ProofSheet({
           </p>
         ) : null}
 
+        {phase === "queued" ? (
+          <p
+            className="mt-5 rounded-card border-2 border-ink bg-sun px-4 py-3.5 text-[15px] font-bold leading-snug shadow-row"
+            role="status"
+          >
+            Saved on this phone. XP arrives when you're back online.
+          </p>
+        ) : null}
+
         {phase === "verdict" || phase === "reward" ? (
           <p
             className={`mt-5 rounded-card border-2 border-ink px-4 py-3.5 text-[15px] font-bold leading-snug shadow-row ${rewardTone}`}
@@ -310,6 +368,16 @@ export function ProofSheet({
             ) : null}
             {saveFailed ? <span className="mt-1 block">The XP did not save yet.</span> : null}
           </p>
+        ) : null}
+
+        {phase === "queued" ? (
+          <button
+            type="button"
+            onClick={close}
+            className="mt-4 flex min-h-12 w-full items-center justify-center rounded-btn border-2 border-ink bg-pink text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed"
+          >
+            Done
+          </button>
         ) : null}
 
         {phase === "verdict" ? (
@@ -371,11 +439,15 @@ function stopStream(stream: MediaStream | null) {
 }
 
 async function saveCheckIn(questId: string): Promise<CheckInResult | null> {
-  const response = await fetch("/api/checkins", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ quest_id: questId }),
-  });
-  if (!response.ok) return null;
-  return parseCheckInResult(await response.json());
+  try {
+    const response = await fetch("/api/checkins", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quest_id: questId }),
+    });
+    if (!response.ok) return null;
+    return parseCheckInResult(await response.json());
+  } catch {
+    return null;
+  }
 }

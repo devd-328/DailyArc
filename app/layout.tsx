@@ -1,3 +1,4 @@
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import type { Metadata, Viewport } from "next";
 import { Dela_Gothic_One, Zen_Kaku_Gothic_New } from "next/font/google";
 import localFont from "next/font/local";
@@ -28,8 +29,17 @@ const sfx = localFont({
 });
 
 export const metadata: Metadata = {
+  applicationName: "DailyArc",
   title: "DailyArc",
   description: "Level up your real life like an anime protagonist, then share your anime identity card.",
+  appleWebApp: {
+    capable: true,
+    title: "DailyArc",
+    statusBarStyle: "default",
+  },
+  icons: {
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
@@ -43,7 +53,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${dela.variable} ${zen.variable} ${sfx.variable}`}>
-      <body className="min-h-dvh bg-paper font-sans text-ink antialiased">{children}</body>
+      <body className="min-h-dvh bg-paper font-sans text-ink antialiased">
+        <ServiceWorkerRegister />
+        {children}
+      </body>
     </html>
   );
 }

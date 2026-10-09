@@ -83,6 +83,7 @@ async function QuestsBody() {
           rank={progress.rank}
           starters={STARTER_TEMPLATES}
           roast={roast}
+          timezone={profile.timezone}
         />
       </div>
 
