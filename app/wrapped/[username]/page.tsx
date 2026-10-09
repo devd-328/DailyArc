@@ -54,7 +54,7 @@ async function WrappedBody({ params }: { params: Promise<{ username: string }> }
 
   return (
     <div className="mx-auto flex w-full max-w-[390px] flex-col items-center md:max-w-md lg:max-w-xl">
-      <div className="wrapped-result-card flex justify-center">
+      <div className="wrapped-result-card flex w-full justify-center">
         <CardPreview data={result.card} />
       </div>
       {!result.enoughData ? (
@@ -98,7 +98,9 @@ function WrappedMessage({ code }: { code: keyof typeof WRAPPED_ERROR_COPY }) {
 function WrappedFallback() {
   return (
     <div className="mx-auto flex w-full max-w-[390px] flex-col items-center md:max-w-md">
-      <div className="card-preview wrapped-result-card rounded-card border-2 border-dashed border-ink-soft bg-card/60" />
+      <div className="wrapped-result-card flex w-full justify-center">
+        <div className="card-preview rounded-card border-2 border-dashed border-ink-soft bg-card/60" />
+      </div>
     </div>
   );
 }

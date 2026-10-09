@@ -162,7 +162,7 @@
   width: 1080px;
   height: 1920px;
   transform-origin: top left;
-  transform: scale(calc(100cqi / 1080));
+  transform: scale(calc(100cqi / 1080px));
 }
 
 .app-shell {
