@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="DailyArc">
+  <rect width="512" height="512" fill="#1b2559"/>
+  <path d="M138 315A118 118 0 0 1 374 315" fill="none" stroke="#ff5a8a" stroke-width="56" stroke-linecap="round" transform="translate(18 18)"/>
+  <path d="M138 315A118 118 0 0 1 374 315" fill="none" stroke="#ffc93c" stroke-width="56" stroke-linecap="round"/>
+</svg>
