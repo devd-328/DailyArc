@@ -24,6 +24,12 @@ export type RoastResult = {
 };
 
 const LATE_NIGHT_MINUTES = 4 * 60;
+const WORKOUT_QUEST = /\b(walk|run|gym|workout|lift|lifts|exercise|push-?ups?|train|training|stretch|cardio|jog|yoga|squat|plank)\b/i;
+const STUDY_QUEST = /\b(study|studying|read|reading|book|books|homework|revise|revision|learn|learning|pages?|notes?)\b/i;
+
+function missedQuestNames(input: RoastInput): string[] {
+  return input.quests.filter((quest) => !quest.done).map((quest) => quest.name);
+}
 
 export function pickRoast(lines: readonly string[], seed: string): string {
   let hash = 0;
@@ -51,7 +57,12 @@ export function roastTrigger(input: RoastInput): RoastTrigger {
   if (hasQuests && remaining > 0 && input.level <= 9 && input.bestStreak >= 3) {
     return "low_level";
   }
-  if (hasQuests && remaining > 0) return "skipped_habit";
+  if (hasQuests && remaining > 0) {
+    const missed = missedQuestNames(input);
+    if (missed.length > 0 && missed.every((name) => WORKOUT_QUEST.test(name))) return "skipped_workout";
+    if (missed.length > 0 && missed.every((name) => STUDY_QUEST.test(name))) return "study_focus";
+    return "skipped_habit";
+  }
   if (hasQuests && remaining === 0) return "level_up_roast";
   return "motivational_mean";
 }

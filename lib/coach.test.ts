@@ -47,6 +47,16 @@ describe("roastTrigger", () => {
     expect(roastTrigger(sample({ quests: [] }))).toBe("motivational_mean");
     expect(roastTrigger(sample({ level: 4, bestStreak: 5, streakDays: 0 }))).toBe("low_level");
   });
+
+  it("uses workout and study lines only when every open quest matches", () => {
+    expect(
+      roastTrigger(sample({ quests: [{ name: "Walk for 20 minutes", done: false }] })),
+    ).toBe("skipped_workout");
+    expect(
+      roastTrigger(sample({ quests: [{ name: "Read 10 pages", done: false }] })),
+    ).toBe("study_focus");
+    expect(roastTrigger(sample())).toBe("skipped_habit");
+  });
 });
 
 describe("roastLine", () => {
