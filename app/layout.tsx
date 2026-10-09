@@ -4,6 +4,7 @@ import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import type { Metadata, Viewport } from "next";
 import { Dela_Gothic_One, Zen_Kaku_Gothic_New } from "next/font/google";
 import localFont from "next/font/local";
+import { Suspense } from "react";
 import "./globals.css";
 
 // Display font: watcher type names, levels, big numbers, screen titles.
@@ -58,7 +59,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${dela.variable} ${zen.variable} ${sfx.variable}`}>
       <body className="min-h-dvh bg-paper font-sans text-ink antialiased">
         <ServiceWorkerRegister />
-        <InstallPrompt />
+        <Suspense fallback={null}>
+          <InstallPrompt />
+        </Suspense>
         {children}
         <Analytics />
       </body>
