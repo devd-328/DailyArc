@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { leveling, STATS, type Rank, type Stat, type WatcherType } from "./config";
 import { rankForLevel } from "./ranks";
 import { localCheckinDate, periodStart } from "./streaks";
@@ -64,12 +65,12 @@ export function parsePublicProfile(data: unknown): PublicProfileRow | null {
   };
 }
 
-export async function getProfile(userId: string): Promise<ProfileRow | null> {
+export const getProfile = cache(async (userId: string): Promise<ProfileRow | null> => {
   const supabase = await createClient();
   const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
   if (error || !data) return null;
   return data as ProfileRow;
-}
+});
 
 export async function requireProfile(userId: string): Promise<ProfileRow> {
   const profile = await getProfile(userId);
@@ -97,50 +98,82 @@ export function progressFromProfile(profile: ProfileRow) {
   };
 }
 
-export async function loadQuestBoard(profile: ProfileRow, now: Date) {
+const fetchActiveQuests = cache(async (userId: string): Promise<QuestRow[]> => {
   const supabase = await createClient();
-  const localDay = localCheckinDate(now, profile.timezone);
   const { data: quests } = await supabase
     .from("quests")
     .select("id, name, stat, xp_value, cadence, active")
-    .eq("user_id", profile.id)
+    .eq("user_id", userId)
     .eq("active", true)
     .order("created_at", { ascending: true });
+  return (quests ?? []) as QuestRow[];
+});
 
-  const rows = (quests ?? []) as QuestRow[];
+const fetchDoneQuestIds = cache(async (userId: string, localDay: string): Promise<string[]> => {
+  const rows = await fetchActiveQuests(userId);
   const periods = [...new Set(rows.map((quest) => periodStart(localDay, quest.cadence)))];
-  let doneIds = new Set<string>();
-  if (rows.length > 0) {
-    const { data: checkins } = await supabase
-      .from("checkins")
-      .select("quest_id, period_start")
-      .eq("user_id", profile.id)
-      .in(
-        "quest_id",
-        rows.map((quest) => quest.id),
-      )
-      .in("period_start", periods);
-    doneIds = new Set(
-      (checkins ?? [])
-        .filter((row) => {
-          const quest = rows.find((item) => item.id === row.quest_id);
-          if (!quest) return false;
-          return row.period_start === periodStart(localDay, quest.cadence);
-        })
-        .map((row) => row.quest_id as string),
-    );
-  }
+  if (rows.length === 0 || periods.length === 0) return [];
+  const supabase = await createClient();
+  const { data: checkins } = await supabase
+    .from("checkins")
+    .select("quest_id, period_start")
+    .eq("user_id", userId)
+    .in(
+      "quest_id",
+      rows.map((quest) => quest.id),
+    )
+    .in("period_start", periods);
+  return (checkins ?? [])
+    .filter((row) => {
+      const quest = rows.find((item) => item.id === row.quest_id);
+      if (!quest) return false;
+      return row.period_start === periodStart(localDay, quest.cadence);
+    })
+    .map((row) => row.quest_id as string);
+});
 
+export function primeActiveQuests(userId: string) {
+  void fetchActiveQuests(userId);
+}
+
+export async function loadQuestBoard(profile: ProfileRow, now: Date) {
+  const localDay = localCheckinDate(now, profile.timezone);
+  const [rows, doneIds] = await Promise.all([
+    fetchActiveQuests(profile.id),
+    fetchDoneQuestIds(profile.id, localDay),
+  ]);
+  const done = new Set(doneIds);
   return {
     localDay,
     quests: rows.map((quest) => ({
       ...quest,
-      done: doneIds.has(quest.id),
+      done: done.has(quest.id),
     })),
   };
 }
 
-export async function loadStatXp(userId: string): Promise<StatXp> {
+const fetchXpAwards = cache(async (userId: string, sinceIso: string): Promise<{ createdAt: string; xp: number }[]> => {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("checkins")
+    .select("xp_awarded, created_at")
+    .eq("user_id", userId)
+    .gte("created_at", sinceIso);
+  return (data ?? []).flatMap((row) => {
+    const createdAt = row.created_at;
+    const xp = row.xp_awarded;
+    if (typeof createdAt !== "string" || typeof xp !== "number") return [];
+    return [{ createdAt, xp }];
+  });
+});
+
+export async function loadXpAwards(userId: string, since: Date): Promise<{ createdAt: string; xp: number }[]> {
+  const day = new Date(since);
+  day.setUTCHours(0, 0, 0, 0);
+  return fetchXpAwards(userId, day.toISOString());
+}
+
+export const loadStatXp = cache(async (userId: string): Promise<StatXp> => {
   const supabase = await createClient();
   const { data } = await supabase.from("stats").select("*").eq("user_id", userId).maybeSingle();
   const empty = Object.fromEntries(STATS.map((stat) => [stat, 0])) as StatXp;
@@ -152,5 +185,5 @@ export async function loadStatXp(userId: string): Promise<StatXp> {
     charisma: data.charisma_xp ?? 0,
     vitality: data.vitality_xp ?? 0,
   };
-}
+});
 

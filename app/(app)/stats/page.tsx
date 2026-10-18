@@ -1,94 +1,59 @@
-import { RankBadge } from "@/components/RankBadge";
-import { STAT_LABELS, STATS } from "@/lib/config";
-import { loadStatXp, progressFromProfile, requireProfile } from "@/lib/profile";
+import { StatsBoard, type StatBar } from "@/components/StatsBoard";
+import { STATS } from "@/lib/config";
+import { loadStatXp, loadXpAwards, progressFromProfile, requireProfile } from "@/lib/profile";
 import { nextRankAt } from "@/lib/ranks";
+import { localCheckinDate } from "@/lib/streaks";
 import { requireUser } from "@/lib/supabase/session";
+import { xpRanges } from "@/lib/xp-series";
 import { xpProgress } from "@/lib/xp";
-import { Suspense } from "react";
+import { connection } from "next/server";
 
 export default function StatsPage() {
-  return (
-    <Suspense>
-      <StatsBody />
-    </Suspense>
-  );
+  return <StatsBody />;
 }
 
 async function StatsBody() {
   const user = await requireUser();
-  const profile = await requireProfile(user.id);
+  await connection();
+  const now = new Date();
+  const since = new Date(now);
+  since.setUTCDate(since.getUTCDate() - 400);
+  const [profile, statXp, awards] = await Promise.all([
+    requireProfile(user.id),
+    loadStatXp(user.id),
+    loadXpAwards(user.id, since),
+  ]);
   const progress = progressFromProfile(profile);
-  const statXp = await loadStatXp(profile.id);
-  const rows = STATS.map((stat) => {
-    const xp = statXp[stat];
-    const { level, intoLevel, toNext } = xpProgress(xp);
-    const filled = toNext <= 0 ? 10 : Math.min(10, Math.floor((intoLevel / toNext) * 10));
-    return { stat, level, filled, xp };
-  }).sort((a, b) => b.xp - a.xp);
-  const topXp = rows[0]?.xp ?? 0;
+  const ranges = xpRanges(awards, localCheckinDate(now, profile.timezone), profile.timezone);
+  const ranked = STATS.map((stat) => ({ stat, xp: statXp[stat] })).sort((a, b) => b.xp - a.xp);
+  const topXp = ranked[0]?.xp ?? 0;
+  const rows: StatBar[] = ranked.map((row) => ({
+    stat: row.stat,
+    level: xpProgress(row.xp).level,
+    xp: row.xp,
+    percent: topXp > 0 ? Math.round((row.xp / topXp) * 100) : 0,
+    top: topXp > 0 && row.xp === topXp,
+  }));
   const next = nextRankAt(progress.level);
 
   return (
     <div className="app-split">
-    <div className="min-w-0">
-      <h1 className="mb-4 font-display text-[32px]">Stats</h1>
-
-      <section className="rounded-card border-2 border-ink bg-card px-3.5 py-4 shadow-panel">
-        <div className="flex gap-4">
-          <div className="w-[92px] shrink-0 text-center">
-            <RankBadge rank={progress.rank} size={76} />
-            <div className="mt-2 text-[13px] font-bold text-ink-soft">Level</div>
-            <div className="font-display text-[32px] leading-none">{progress.level}</div>
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-            {rows.map((row) => (
-              <div key={row.stat}>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-[15px] font-bold">
-                    {STAT_LABELS[row.stat]}
-                    {topXp > 0 && row.xp === topXp ? (
-                      <span className="ml-1.5 rounded-chip border-2 border-ink bg-sun px-2 py-px text-[13px] font-bold">
-                        Top
-                      </span>
-                    ) : null}
-                  </span>
-                  <small className="text-[13px] font-bold text-ink-soft">Lv {row.level}</small>
-                </div>
-                <div className="mt-1 flex gap-0.5">
-                  {Array.from({ length: 10 }, (_, index) => (
-                    <i
-                      key={index}
-                      className={`h-3.5 flex-1 border-2 border-ink ${index < row.filled ? "bg-sun" : "bg-paper"}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="mt-[18px] flex items-center justify-between rounded-card border-2 border-ink bg-card px-4 py-3 shadow-row">
-        <div>
-          <div className="text-[13px] font-bold text-ink-soft">Total XP</div>
-          <div className="font-display text-[22px]">{profile.total_xp.toLocaleString("en-US")}</div>
-        </div>
-        <div className="text-right">
-          <div className="text-[13px] font-bold text-ink-soft">Next rank</div>
-          <div className="text-[15px] font-bold">
-            {next ? `${next.rank} at level ${next.level}` : "S rank"}
-          </div>
-        </div>
-      </section>
+    <div>
+      <StatsBoard
+        rank={progress.rank}
+        nextLabel={next ? `${next.rank} at level ${next.level}` : "S rank"}
+        rows={rows}
+        ranges={ranges}
+      />
       <p className="mt-3.5 text-[13px] font-medium text-ink-soft lg:hidden">
-        Each bar shows progress to the next level of that stat. Quests raise the stat they train.
+        Each bar is that stat's share of your strongest stat. Quests raise the stat they train.
       </p>
     </div>
     <aside className="app-rail">
       <section className="rounded-card border-2 border-ink bg-card p-4 shadow-panel">
         <h2 className="font-display text-[22px]">How stats work</h2>
         <p className="mt-3 text-[15px] font-medium leading-normal">
-          Each quest trains one stat. The bar is progress to the next level of that stat. Top is whichever has the most XP.
+          Each quest trains one stat. The bar compares that stat with your strongest one. Top is whichever has the most XP.
         </p>
         <p className="mt-3 text-[15px] font-medium leading-normal">
           Skip a day and the streak resets. XP stays. Rank is from total XP, not vibes.

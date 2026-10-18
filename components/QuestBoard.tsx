@@ -24,6 +24,7 @@ export function QuestBoard({
   starters,
   roast,
   timezone,
+  openComposer = false,
 }: {
   quests: BoardQuest[];
   streakDays: number;
@@ -31,9 +32,10 @@ export function QuestBoard({
   starters: readonly StarterTemplate[];
   roast: Omit<RoastInput, "quests">;
   timezone: string;
+  openComposer?: boolean;
 }) {
   const router = useRouter();
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(openComposer && quests.length < questConfig.maxActive);
   const [proofQuest, setProofQuest] = useState<BoardQuest | null>(null);
   const [pendingTemplate, setPendingTemplate] = useState<string | null>(null);
   const [justAdded, setJustAdded] = useState<string[]>([]);
@@ -42,6 +44,12 @@ export function QuestBoard({
   const [settlement, setSettlement] = useState<ProofSettlement | null>(null);
   const proofQuestRef = useRef(proofQuest);
   proofQuestRef.current = proofQuest;
+
+  useEffect(() => {
+    if (!openComposer) return;
+    if (quests.length < questConfig.maxActive) setSheetOpen(true);
+    router.replace("/quests");
+  }, [openComposer, quests.length, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -249,14 +257,16 @@ export function QuestBoard({
         </ul>
       ) : null}
 
-      <button
-        type="button"
-        disabled={atLimit}
-        onClick={() => setSheetOpen(true)}
-        className="mt-3.5 flex min-h-12 w-full items-center justify-center gap-2 rounded-btn border-2 border-ink bg-card text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed disabled:opacity-60"
-      >
-        <span className="text-xl leading-none">+</span> {empty ? "Write my own quest" : "New quest"}
-      </button>
+      {empty ? (
+        <button
+          type="button"
+          disabled={atLimit}
+          onClick={() => setSheetOpen(true)}
+          className="mt-3.5 flex min-h-12 w-full items-center justify-center gap-2 rounded-btn border-2 border-ink bg-card text-[15px] font-bold shadow-row active:translate-x-[3px] active:translate-y-[3px] active:shadow-pressed disabled:opacity-60"
+        >
+          <span className="text-xl leading-none">+</span> Write my own quest
+        </button>
+      ) : null}
       <p className="mt-2 text-center text-[13px] font-medium text-ink-soft">
         {quests.length} of {questConfig.maxActive} quests used
       </p>

@@ -13,14 +13,9 @@ import { getSupabasePublicEnv } from "@/lib/supabase/public-env";
 import { requireUser } from "@/lib/supabase/session";
 import { watcherTypeLabel } from "@/lib/watcherType";
 import { connection } from "next/server";
-import { Suspense } from "react";
 
 export default function ProfilePage({ searchParams }: PageProps<"/profile">) {
-  return (
-    <Suspense>
-      <ProfileBody searchParams={searchParams} />
-    </Suspense>
-  );
+  return <ProfileBody searchParams={searchParams} />;
 }
 
 async function ProfileBody({ searchParams }: { searchParams: PageProps<"/profile">["searchParams"] }) {
@@ -63,7 +58,9 @@ async function ProfileBody({ searchParams }: { searchParams: PageProps<"/profile
           <div className="text-sm font-medium text-ink-soft">
             Level {progress.level}, {typeLabel ?? "no watcher type yet"}
           </div>
-          <div className="mt-0.5 text-[13px] font-bold">Best streak: {profile.longest_streak} days</div>
+          <div className="mt-0.5 text-[13px] font-bold">
+            Best streak: {profile.longest_streak} {profile.longest_streak === 1 ? "day" : "days"}
+          </div>
         </div>
       </section>
 

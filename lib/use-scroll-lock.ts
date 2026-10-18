@@ -3,8 +3,9 @@
 import { useEffect } from "react";
 
 /** Freeze the page behind a sheet. The sheet itself can still scroll. */
-export function useScrollLock() {
+export function useScrollLock(active = true) {
   useEffect(() => {
+    if (!active) return;
     const html = document.documentElement;
     const body = document.body;
     const scrollY = window.scrollY;
@@ -34,5 +35,5 @@ export function useScrollLock() {
       body.style.paddingRight = previous.bodyPaddingRight;
       window.scrollTo(0, scrollY);
     };
-  }, []);
+  }, [active]);
 }

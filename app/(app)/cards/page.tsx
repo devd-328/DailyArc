@@ -12,14 +12,9 @@ import { requireUser } from "@/lib/supabase/session";
 import { utcDay, WRAPPED_ERROR_COPY } from "@/lib/wrapped";
 import { io } from "next/cache";
 import { connection } from "next/server";
-import { Suspense } from "react";
 
 export default function CardsPage({ searchParams }: PageProps<"/cards">) {
-  return (
-    <Suspense>
-      <CardsBody searchParams={searchParams} />
-    </Suspense>
-  );
+  return <CardsBody searchParams={searchParams} />;
 }
 
 async function CardsBody({ searchParams }: { searchParams: PageProps<"/cards">["searchParams"] }) {
