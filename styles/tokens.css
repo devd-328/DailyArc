@@ -175,10 +175,12 @@
   position: fixed;
   inset: auto 0 0 0;
   z-index: 20;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 0.5rem;
   height: calc(76px + env(safe-area-inset-bottom));
   align-items: center;
-  justify-content: space-around;
+  justify-items: center;
   background: var(--ink);
   padding: 0 0.5rem env(safe-area-inset-bottom);
 }
@@ -201,6 +203,7 @@
     max-width: 72rem;
   }
   .app-tabbar {
+    display: flex;
     inset: 0 auto 0 0;
     height: 100dvh;
     width: var(--app-rail);

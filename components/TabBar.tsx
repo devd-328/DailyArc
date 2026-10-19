@@ -83,7 +83,7 @@ function renderTab(tab: (typeof TABS)[number], active: boolean) {
     <Link
       key={tab.href}
       href={tab.href}
-      className={`flex h-[52px] min-w-[72px] flex-col items-center justify-center gap-0.5 rounded-btn border-2 text-[13px] font-bold lg:w-full lg:flex-row lg:justify-start lg:gap-3 lg:px-3 ${
+      className={`flex h-[52px] w-full min-w-0 max-w-[4.5rem] flex-col items-center justify-center gap-0.5 rounded-btn border-2 text-[13px] font-bold lg:w-full lg:max-w-none lg:flex-row lg:justify-start lg:gap-3 lg:px-3 ${
         active ? "border-paper bg-pink text-ink" : "border-transparent text-paper"
       }`}
     >
