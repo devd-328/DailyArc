@@ -270,10 +270,12 @@
 /* Halftone dots behind hero areas only, fading out downward. */
 .halftone {
   position: relative;
+  isolation: isolate;
 }
 .halftone::before {
   content: "";
   position: absolute;
+  z-index: -1;
   inset: 0 0 auto 0;
   height: min(330px, 42vh);
   background-image: radial-gradient(circle, var(--halftone) 1.6px, transparent 1.8px);
@@ -296,10 +298,12 @@
 /* Halftone on the 1080 Wrapped card. Dot size from DESIGN_SYSTEM.md. */
 .card-halftone {
   position: relative;
+  isolation: isolate;
 }
 .card-halftone::before {
   content: "";
   position: absolute;
+  z-index: -1;
   inset: 0 0 auto 0;
   height: 1000px;
   background-image: radial-gradient(circle, var(--halftone) 4.5px, transparent 5px);
