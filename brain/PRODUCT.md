@@ -64,7 +64,7 @@ Thresholds are starting values and live in config so they can be tuned without c
 ### Streak reminder
 - Opt in from the profile screen. Off until the user allows notifications.
 - One alert per local day, only when the daily streak is above 0 and there is no check-in for the current quest day.
-- Sent in the 120 minutes before the 3:00 AM local reset. A daily job at 21:00 UTC sends it. The app does not need to be open.
+- Sent in the 120 minutes before the 3:00 AM local reset. A daily job at 20:00 UTC sends it. The app does not need to be open.
 - iPhone and iPad receive it only after DailyArc is added to the home screen. Android can allow it in the browser.
 
 ### Pacing (assumes about 70 XP per day: 3 daily quests at 20 XP plus streak bonus)
