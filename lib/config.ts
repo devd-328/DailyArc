@@ -60,7 +60,7 @@ export const streaks = {
   graceHour: 3,
   /**
    * Minutes before the local reset when the closed-app streak reminder can send.
-   * Wider than one hour so the hourly cron does not skip a timezone.
+   * The Hobby cron runs once a day at 21:00 UTC and can start up to 59 minutes late.
    */
   reminderWindowMinutes: 120,
 } as const;

@@ -36,7 +36,7 @@ export type ReminderCandidate = {
 
 export type PushSendResult = "ok" | "gone" | "failed";
 
-/** Narrow store so the hourly scan can be tested without Supabase or the push network. */
+/** Narrow store so the daily scan can be tested without Supabase or the push network. */
 export type ReminderStore = {
   listCandidates(): Promise<ReminderCandidate[]>;
   claim(userId: string, localDay: string): Promise<"claimed" | "exists">;

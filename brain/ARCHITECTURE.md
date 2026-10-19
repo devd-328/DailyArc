@@ -242,7 +242,7 @@ POST   /api/events                record a share or export event
 - Deleting a profile removes its quests, check-ins, stats, events, push subscriptions, reminder rows and its auth user, and clears its cache entries.
 
 ## Streak reminders
-`GET /api/cron/streak-reminders` runs every hour (`0 * * * *` in `vercel.json`). The request must send `Authorization: Bearer <CRON_SECRET>`. Vercel sends that header when `CRON_SECRET` is set. A once-a-day cron cannot cover every timezone's window before 3:00 AM, and Vercel Hobby only allows a daily cron, so hourly needs a plan that allows it or another hourly caller of the same route.
+`GET /api/cron/streak-reminders` runs once a day at 21:00 UTC (`0 21 * * *` in `vercel.json`). That hour is 2:00 AM in UTC+5, inside the 120 minutes before the 3:00 AM reset. Vercel Hobby rejects a schedule that runs more than once a day, and the daily job can start up to 59 minutes late. The request must send `Authorization: Bearer <CRON_SECRET>`. Vercel sends that header when `CRON_SECRET` is set. Timezones whose reset is far from 22:00 UTC miss this run. An hourly caller of the same route covers them.
 
 The route loads profiles with `current_streak > 0` that have a push subscription. It keeps a user when `minutesUntilDayReset` is inside `streaks.reminderWindowMinutes` (120) and `last_checkin_date` is before today's `localCheckinDate`. It sends one Web Push per user for that local day. The payload opens `/quests`. VAPID keys are `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` (`mailto:` or `https:`).
 

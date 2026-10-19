@@ -11,7 +11,7 @@ describe("config", () => {
     }
   });
 
-  it("keeps the reminder window wider than the hourly cron", () => {
+  it("keeps the reminder window open through a late daily cron", () => {
     expect(streaks.reminderWindowMinutes).toBeGreaterThan(60);
   });
 
